@@ -5,9 +5,10 @@
 #[license = "MIT"];
 
 extern mod extra;
-extern mod http = "github.com/chris-morgan/rust-http";
+extern mod http;
+//extern mod http = "github.com/chris-morgan/rust-http";
 
-mod routes;
+//mod routes;
 
 use std::io::net::ip::{SocketAddr, Ipv4Addr};
 use std::io::Writer;
@@ -16,8 +17,10 @@ use extra::time;
 use http::server::{Config, Server, Request, ResponseWriter};
 use http::headers;
 
-//#[deriving(Clone)]
-//struct OxidizeServer;
+use http::server::request::{Star, AbsoluteUri, AbsolutePath, Authority};
+
+#[deriving(Clone)]
+struct OxidizeServer;
 
 impl Server for OxidizeServer {
     fn get_config(&self) -> Config {
@@ -26,9 +29,9 @@ impl Server for OxidizeServer {
 
     fn handle_request(&self, _r: &Request, w: &mut ResponseWriter) {
         w.headers.date = Some(time::now_utc());
-        w.headers.server = Some(~"Apache/2.2.22 (Ubuntu)");
-        //w.headers.last_modified = Some(~"Thu, 05 May 2011 11:46:42 GMT");
-        w.headers.last_modified = Some(time::Tm {
+        w.headers.server = Some(~"Oxidize/0.0.0 (Ubuntu)");
+
+        /*w.headers.last_modified = Some(time::Tm {
             tm_sec: 42, // seconds after the minute ~[0-60]
             tm_min: 46, // minutes after the hour ~[0-59]
             tm_hour: 11, // hours after midnight ~[0-23]
@@ -41,25 +44,38 @@ impl Server for OxidizeServer {
             tm_gmtoff: 0, // offset from UTC in seconds
             tm_zone: ~"GMT", // timezone abbreviation
             tm_nsec: 0, // nanoseconds
-        });
-        w.headers.etag = Some(headers::etag::EntityTag {
-                                weak: false,
-                                opaque_tag: ~"501b29-b1-4a285ed47404a" });
-        w.headers.accept_ranges = Some(headers::accept_ranges::RangeUnits(
-                                            ~[headers::accept_ranges::Bytes]));
-        w.headers.content_length = Some(177);
-        w.headers.vary = Some(~"Accept-Encoding");
+        });*/
+
+        let path = match _r.request_uri{
+            AbsolutePath(ref i) => i.to_str(),
+            AbsoluteUri(ref i) => i.to_str(),
+            Authority(ref i) => i.to_str(),
+            Star => ~"hello"
+        };
+        println!("{}",path);
+        
         w.headers.content_type = Some(headers::content_type::MediaType {
             type_: ~"text",
             subtype: ~"html",
             parameters: ~[]
         });
-        w.headers.extensions.insert(~"X-Pad", ~"avoid browser bug");
 
-        w.write(bytes!("\
-            <html><body><h1>It works!</h1>\n\
-            <p>This is the default web page for this server.</p>\n\
-            <p>The web server software is running but no content has been added, yet.</p>\n\
-            </body></html>\n"));
+        let response = render("something");
+        w.headers.content_length = Some(response.len());
+
+        w.write(response.as_bytes());
     }
+}
+
+fn render(path: &str) -> ~str {
+    let mut response = ~"\
+        <html><body><h1>It works!</h1>\n\
+        <p>This is the default web page for this server.</p>\n\
+        <p>The web server software is running but no content has been added, yet.</p>\n\
+        </body></html>\n";
+    return response;
+}
+
+fn main() {
+    OxidizeServer.serve_forever();
 }
