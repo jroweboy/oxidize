@@ -12,7 +12,12 @@ extern mod http;
 
 use std::io::net::ip::{SocketAddr, Ipv4Addr};
 use std::io::Writer;
+use std::io::File;
 use extra::time;
+use extra::json::{Json, Decoder, ToJson, Object};
+use extra::list::List;
+use extra::treemap::TreeMap;
+use std::str;
 
 use http::server::{Config, Server, Request, ResponseWriter};
 use http::headers;
@@ -63,6 +68,10 @@ impl Server for OxidizeServer {
         let response = render("something");
         w.headers.content_length = Some(response.len());
 
+        let contents = File::open(&Path::new("routes.json")).read_to_end();
+        let mut jsonObj = extra::json::from_str(str::from_utf8(contents)).ok();
+        println!("{:?}",jsonObj);
+
         w.write(response.as_bytes());
     }
 }
@@ -74,6 +83,7 @@ fn render(path: &str) -> ~str {
         <p>The web server software is running but no content has been added, yet.</p>\n\
         </body></html>\n";
     return response;
+    //return File::open(&Path::new(path)).read_to_end();
 }
 
 fn main() {
