@@ -4,21 +4,31 @@ use http::headers;
 use std::io::net::ip::{SocketAddr, Ipv4Addr};
 
 use router::Router;
+use renderer::Renderer;
 
 mod router;
+mod renderer;
 
 #[deriving(Clone)]
 struct OxidizeServer;
 
 struct OxidizeRouter;
 
-impl Router for OxidizeRouter {
-  fn route() -> ~str {
+struct OxidizeRenderer;
+
+impl Renderer for OxidizeRenderer {
+  fn render(&self) -> ~str {
     return ~"\
       <html><body><h1>It works!</h1>\n\
       <p>This is the default web page for this server.</p>\n\
       <p>The web server software is running but no content has been added, yet.</p>\n\
       </body></html>\n";
+  }
+}
+
+impl Router for OxidizeRouter {
+  fn route(&self) -> ~str {
+    return OxidizeRenderer.render();
   }
 }
 
@@ -28,11 +38,7 @@ impl Server for OxidizeServer {
   }
 
   fn handle_request(&self, _r: &Request, w: &mut ResponseWriter) {
-    let response = ~"\
-      <html><body><h1>It works!</h1>\n\
-      <p>This is the default web page for this server.</p>\n\
-      <p>The web server software is running but no content has been added, yet.</p>\n\
-      </body></html>\n";
+    let response = OxidizeRouter.route();
 
     w.headers.content_type = Some(headers::content_type::MediaType {
       type_: ~"text",

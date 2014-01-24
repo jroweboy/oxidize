@@ -1,4 +1,4 @@
 
 pub trait Router {
-	fn route() -> ~str;
+	fn route(&self) -> ~str;
 }
