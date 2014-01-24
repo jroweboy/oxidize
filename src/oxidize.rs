@@ -8,9 +8,21 @@ use router::Router;
 mod router;
 
 #[deriving(Clone)]
-struct Oxidize;
+struct OxidizeServer;
 
-impl Server for Oxidize {
+struct OxidizeRouter;
+
+impl Router for OxidizeRouter {
+  fn route() -> ~str {
+    return ~"\
+      <html><body><h1>It works!</h1>\n\
+      <p>This is the default web page for this server.</p>\n\
+      <p>The web server software is running but no content has been added, yet.</p>\n\
+      </body></html>\n";
+  }
+}
+
+impl Server for OxidizeServer {
   fn get_config(&self) -> Config {
     Config { bind_address: SocketAddr { ip: Ipv4Addr(127, 0, 0, 1), port: 8001 } }
   }
@@ -34,12 +46,7 @@ impl Server for Oxidize {
   }
 }
 
-impl Router for Oxidize {
-  fn something() -> () {
-    
-  }
-}
-
 fn main(){
-  Oxidize.serve_forever();
+  OxidizeServer.serve_forever();
+  OxidizeRouter.route();
 }
