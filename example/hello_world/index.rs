@@ -1,9 +1,9 @@
 
-extern mod Oxidize;
+extern mod oxidize;
 
-use Oxidize::Request;
-use Oxidize::Response;
-use Oxidize::render;
+use oxidize::Request;
+use oxidize::Response;
+use oxidize::render;
 use std::hashmap::HashMap;
 
 pub fn index(Request) -> Response {
