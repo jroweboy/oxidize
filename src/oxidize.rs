@@ -4,6 +4,7 @@ extern mod extra;
 use http::server::{Config, Server, Request, ResponseWriter};
 use http::server::request::{Star, AbsoluteUri, AbsolutePath, Authority};
 use http::headers;
+use http::status;
 use std::io::net::ip::{SocketAddr, Ipv4Addr};
 use extra::time;
 use std::io::File;
@@ -32,11 +33,12 @@ impl Renderer for OxidizeRenderer {
 impl Router for OxidizeRouter {
   // should probably return a result object
   // containing the body and the status
-  fn route(&self, path: &str) -> ~str {
+  fn route(&self, path: &str, response: &mut ResponseWriter) -> ~str {
     if(path == "/"){
       return OxidizeRenderer.render("index");
     }
     else {
+      response.status = status::NotFound;
       return OxidizeRenderer.render("404");
     }
   }
@@ -47,28 +49,28 @@ impl Server for OxidizeServer {
     Config { bind_address: SocketAddr { ip: Ipv4Addr(127, 0, 0, 1), port: 8001 } }
   }
 
-  fn handle_request(&self, _r: &Request, w: &mut ResponseWriter) {
-    w.headers.date = Some(time::now_utc());
-    w.headers.server = Some(~"Oxidize/0.0.0 (Ubuntu)");
+  fn handle_request(&self, req: &Request, res: &mut ResponseWriter) {
+    res.headers.date = Some(time::now_utc());
+    res.headers.server = Some(~"Oxidize/0.0.0 (Ubuntu)");
 
-    let path = match _r.request_uri{
+    let path = match req.request_uri{
       AbsolutePath(ref i) => i.to_str(),
       AbsoluteUri(ref i) => i.to_str(),
       Authority(ref i) => i.to_str(),
       Star => ~"error" // ?
     };
 
-    let response = OxidizeRouter.route(path);
+    let response_body = OxidizeRouter.route(path,res);
 
-    w.headers.content_type = Some(headers::content_type::MediaType {
+    res.headers.content_type = Some(headers::content_type::MediaType {
       type_: ~"text",
       subtype: ~"html",
       parameters: ~[]
     });
 
-    w.headers.content_length = Some(response.len());
+    res.headers.content_length = Some(response_body.len());
 
-    w.write(response.as_bytes());
+    res.write(response_body.as_bytes());
   }
 }
 
