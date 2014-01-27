@@ -1,8 +1,8 @@
 extern mod http;
 
-use http::server::ResponseWriter;
+use http::server::{Request,ResponseWriter};
 
 
 pub trait Router {
-	fn route(&self, path: &str, response: &mut ResponseWriter) -> ~str;
+	fn route(&self, request: &Request, response: &mut ResponseWriter) -> ~str;
 }
