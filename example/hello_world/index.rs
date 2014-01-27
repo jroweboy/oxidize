@@ -1,6 +1,6 @@
 //extern mod oxidize;
 
-//extern mod http;
+extern mod http;
 
 //use oxidize::Oxidize;
 //use oxidize::Request;
@@ -8,6 +8,8 @@
 //use oxidize::render;
 //use oxidize::Router;
 use std::hashmap::HashMap;
+use http::status;
+use http::status::Status;
 
 
 /////////////////////////
@@ -38,15 +40,15 @@ pub struct Request {
 
 pub struct Response {
 	content : ~str,
-	status_code : uint,
+	status: Status
 	// add more stuff? I dunno
 	//reason_phrase : ~str,
 	//streaming : bool,
 }
 
 impl Response {
-	fn new(status_code : uint, content : ~str) -> Response {
-		 Response { content: content, status_code: status_code } 
+	fn new(status : Status, content : ~str) -> Response {
+		Response { content: content, status: status}
 	}
 }
 
@@ -70,7 +72,7 @@ static routes: &'static [Route<'static>] = &[
 
 
 pub fn index(request: Request) -> Response {
-	return Response::new(200, render(request, "templates/index.html", None));
+	return Response::new(status::Ok, render(request, "templates/index.html", None));
 }
 
 fn main() {
