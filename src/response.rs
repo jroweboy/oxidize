@@ -1,15 +1,9 @@
 extern mod http;
 
 use http::status::Status;
-use http::status;
 
+// Very lack luster at the moment but yeah. I'm not sure what I want in here yet anyway
 pub struct Response {
   content : ~str,
   status: Status
-}
-
-impl Response {
-  pub fn new(status : Status, content : ~str) -> Response {
-    Response {content: content, status: status}
-  }
 }

@@ -1,19 +1,27 @@
+LINKFLAGS ?= -L build/
 RUSTFLAGS ?= -O -Z debug-info
-http_files=\
-		      http/lib.rs \
-		      http/buffer.rs \
-		      http/common.rs \
-		      http/generated/read_method.rs \
-		      http/generated/status.rs \
-		      $(wildcard http/headers/*.rs) \
-		      $(wildcard http/client/*.rs) \
-		      $(wildcard http/server/*.rs) \
-		      http/memstream.rs \
-		      http/method.rs \
-		      http/rfc2616.rs
 
-http: $(http_files)
-	rustc $(RUSTFLAGS) --dylib --rlib http/lib.rs --out-dir=build
+example_files=\
+			example/hello_world/index.rs
 
-server: main.rs
-	rustc $(RUSTFLAGS) main.rs -o build/main -L build/
+oxidize_files=\
+			src/oxidize.rs\
+			src/renderer.rs\
+			src/route.rs
+
+all: oxidize examples
+
+examples: $(example_files)
+	mkdir -p build/examples/hello_world/
+	rustc $(RUSTFLAGS) $(LINKFLAGS) -o build/examples/hello_world/hello_world example/hello_world/index.rs
+	cp -R example/hello_world/templates build/examples/hello_world/
+
+# TODO: This rebuilds everytime even if there is no change.
+# I just happen to suck at Makefiles
+oxidize: $(oxidize_files)
+	rustc $(RUSTFLAGS) $(LINKFLAGS) --dylib --rlib src/oxidize.rs --out-dir build/
+
+.PHONY: clean
+
+clean:
+	rm -rf build/examples build/liboxidize
