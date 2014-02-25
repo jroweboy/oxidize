@@ -20,22 +20,23 @@ lib/mustache: rust-mustache/Makefile
 	$(MAKE) -C rust-mustache/
 	mkdir -p lib
 	touch lib/mustache
-	ln -srf rust-mustache/build/libmustache*.rlib lib/
-	ln -srf rust-mustache/build/libmustache*.so lib/
+# I originally used the -r option but not everyones machine had that :S
+	cd lib && ln -sf ../rust-mustache/build/libmustache*.rlib .
+	cd lib && ln -sf ../rust-mustache/build/libmustache*.so .
 
 lib/http: rust-http/Makefile
 	$(MAKE) -C rust-http/
 	mkdir -p lib
 	touch lib/http
-	ln -srf rust-http/build/libhttp*.rlib lib/
-	ln -srf rust-http/build/libhttp*.so lib/
+	cd lib && ln -sf ../rust-http/build/libhttp*.rlib .
+	cd lib && ln -sf ../rust-http/build/libhttp*.so .
 
 lib/pcre: rust-pcre/Makefile
 	$(MAKE) -C rust-pcre/
 	mkdir -p lib
 	touch lib/pcre
-	ln -srf rust-pcre/lib/libpcre*.rlib lib/
-	ln -srf rust-pcre/lib/libpcre*.so lib/
+	cd lib && ln -sf ../rust-pcre/lib/libpcre*.rlib .
+	cd lib && ln -sf ../rust-pcre/lib/libpcre*.so .
 
 # Main program
 oxidize: lib/mustache lib/http lib/pcre $(OXIDIZE_LIB)
