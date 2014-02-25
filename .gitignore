@@ -1,2 +1,9 @@
+# ignore build directories
 build/*
 http
+lib/
+
+# ignore any libraries folders
+rust-http
+rust-pcre
+rust-mustache

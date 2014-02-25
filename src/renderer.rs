@@ -1,7 +1,9 @@
-extern mod http;
-extern mod mustache;
+extern crate http;
+extern crate mustache;
+extern crate serialize;
 
-use http::server::Request;
+//use http::server::Request;
+use request::Request;
 
 use std::io::File;
 use std::str::from_utf8;
@@ -9,16 +11,22 @@ use std::str::from_utf8;
 #[deriving(Encodable)]
 pub struct Context;
 
-pub fn render(request: &Request, file_name: &str, context : Option<Context>) -> ~str {
+
+#[allow(unused_variable)]
+pub fn render(request: Request, file_name: &str, context : Option<Context>) -> ~str {
 	// TODO: the templates dir probably shouldn't be hard coded
 	let path = Path::new("templates/"+file_name);
 	println!("Render for this file: {}", path.display());
     let contents = File::open(&path).read_to_end();
 
-    from_utf8(contents).to_owned()
+    match from_utf8(contents.unwrap()) {
+        Some(str) => str.to_owned(),
+        None => fail!("File could not be rendered")
+    }
 }
 
-pub fn mustache_render(request: &Request, file_name: &str, context : Option<Context>) -> ~str {
+#[allow(unused_variable)]
+pub fn mustache_render(request: Request, file_name: &str, context : Option<Context>) -> ~str {
 	let path = Path::new("templates/"+file_name);
 	println!("Render for this file: {}", path.display());
     let contents = File::open(&path).read_to_end();
@@ -28,5 +36,9 @@ pub fn mustache_render(request: &Request, file_name: &str, context : Option<Cont
 		None => Context
 	};
 	// TODO: add the request to the context so that they can use things like session vars
-	mustache::render_str(from_utf8(contents).to_owned(), &c)
+    let conts = match from_utf8(contents.unwrap()) {
+        Some(str) => str.to_owned(),
+        None => fail!("File could not be parsed as UTF8")
+    };
+	mustache::render_str(conts, &c)
 }

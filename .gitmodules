@@ -1,0 +1,9 @@
+[submodule "rust-http"]
+	path = rust-http
+	url = https://github.com/jroweboy/rust-http.git
+[submodule "rust-pcre"]
+	path = rust-pcre
+	url = https://github.com/jroweboy/rust-pcre.git
+[submodule "rust-mustache"]
+	path = rust-mustache
+	url = https://github.com/jroweboy/rust-mustache.git

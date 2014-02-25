@@ -1,4 +1,4 @@
-extern mod http;
+extern crate http;
 
 use http::status::Status;
 

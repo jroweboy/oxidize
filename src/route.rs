@@ -1,20 +1,26 @@
-extern mod http;
+extern crate http;
 
 use response::Response;
-// TODO remove rust-http from the public facing api
-//use request::Request;
-use http::server::request::Request;
+use request::Request;
 
+pub type View = fn(Request) -> ~Response;
+
+#[deriving(Clone)]
 pub struct Route<'r> {
 	method : &'r str,
 	path : &'r str,
-	fptr : fn(&Request) -> ~Response
+	fptr : View
 }
 
 impl<'r> Route<'r> {
-    pub fn call (&self, request : &Request) -> ~Response {
+    pub fn call (&self, request: Request) -> ~Response {
         println!("Routing calling the function for path [{}]", self.path);
         let call = self.fptr;
         call(request)
     }
+}
+
+// TODO: move the compiled_routes and the reverse routing everything into here
+pub fn reverse() {
+    
 }
