@@ -19,8 +19,3 @@ impl<'r> Route<'r> {
         call(request)
     }
 }
-
-// TODO: move the compiled_routes and the reverse routing everything into here
-pub fn reverse() {
-    
-}

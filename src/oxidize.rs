@@ -4,6 +4,7 @@ extern crate pcre;
 extern crate collections;
 extern crate time;
 extern crate serialize;
+extern crate mustache;
 
 // It turns out its real easy to reexport mods :D
 // People that extern mod oxidize can use oxidize::reexported::mod;
@@ -24,6 +25,7 @@ use collections::enum_set::{EnumSet};
 use collections::hashmap::HashMap;
 use pcre::{CompileOption, StudyOption, ExtraOption, Pcre};
 
+use std::cast;
 use std::io::net::ip::{SocketAddr, Ipv4Addr};
 
 use response::Response;
@@ -42,7 +44,7 @@ static mut compiled_routes : Option<Pcre> = None;
 // to convert the fn pointer into a raw *() pointer (similar to a void pointer)
 // which already has the Hash trait implemented. The reverse function will take in 
 // a function pointer and context and return a url? I'm not confident about that one...
-//static mut reverse_routes : Option<HashMap<*(), &'static str>> = None;
+static mut reverse_routes_str : Option<HashMap<*(), &'static str>> = None;
 // HashMap::<*(), &'static str>::new();
 
 #[deriving(Clone)]
@@ -57,7 +59,8 @@ pub struct Oxidize {
 
 /// Builds a giant regex from all of the routes
 fn compile_routes(routes : &'static [Route<'static>]) {
-    let mut map = HashMap::new();
+    unsafe { reverse_routes_str = Some(HashMap::<*(), &'static str>::new()) };
+    let revroute = get_reverse_route_str();
     let mut regex = ~"(?";
     let mut i : u32 = 0;
     for route in routes.iter() {
@@ -68,7 +71,8 @@ fn compile_routes(routes : &'static [Route<'static>]) {
         regex.push_str("(*MARK:");
         regex.push_str(i.to_str());
         regex.push_str(")");
-        map.insert(i.to_str(), route.fptr);
+        let fnpointer : *() = unsafe { cast::transmute(route.fptr) };
+        revroute.insert(fnpointer, route.path);
         i += 1;
     }
     regex.push_str(")");
@@ -96,6 +100,16 @@ fn compile_routes(routes : &'static [Route<'static>]) {
 
 fn get_compiled_regex() -> &mut Pcre {
     unsafe { compiled_routes.get_mut_ref() }
+}
+
+fn get_reverse_route_str() -> &mut HashMap<*(), &'static str> {
+    unsafe { reverse_routes_str.get_mut_ref() }
+}
+
+// TODO: move the compiled_routes and the reverse routing everything into route.rs maybe
+pub fn reverse(fptr: route::View) -> &'static str {
+    let fnpointer : &*() = unsafe { cast::transmute(fptr) };
+    *get_reverse_route_str().get(fnpointer)
 }
 
 
@@ -183,8 +197,7 @@ impl Server for Oxidize {
         let my_request = request::Request {
             method: test_method, 
             uri: path,
-            GET: None,
-            POST: None
+            ..Default::default()
         };
         let response_body = self.route(my_request,res);
 

@@ -32,9 +32,17 @@ fn test_mustache(request: Request) -> ~Response {
 
 // TODO: why do controllers need to return an owned pointer? Should it do that?
 fn test_variable(request: Request) -> ~Response {
+    let year = request.get_context_var_or_fail("year");
+    //do something with the year if you want
+    let context = request.get_context();
+    // let year = match request.context {
+    //     Some(str) => str.get("year".to_owned()),
+    //     None => fail!("No year was passed in :p Thats weird"),
+    // };
+
     ~Response {
         status: status::Ok, 
-        content: mustache_render(request, "mustache.html", None)
+        content: mustache_render(request, "variable.html", Some(context)),
     }
 }
 
