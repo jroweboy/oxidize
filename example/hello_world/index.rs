@@ -15,34 +15,41 @@ static routes: &'static [Route<'static>] = &[
 
 
 
-fn index(request: Request) -> ~Response {
-    ~Response {
+fn index<'a>(request: &'a Request) -> &'a Response {
+    Response {
     	status: status::Ok, 
-    	content: render(request, "index.html", None)
+    	content: render(&request, "index.html")
     }
 }
 
 // TODO: why do controllers need to return an owned pointer? Should it do that?
-fn test_mustache(request: Request) -> ~Response {
-    ~Response {
+fn test_mustache<'a>(request: &'a Request) -> &'a Response {
+    //let mut context = request.context.unwrap_or(Hashmap::<~str, ~str>new());
+
+    Response {
         status: status::Ok, 
-        content: mustache_render(request, "mustache.html", None)
+        // TODO: I don't like having to pass Some(empty_val) to say None
+        content: mustache_render(&request, "mustache.html")
     }
 }
 
 // TODO: why do controllers need to return an owned pointer? Should it do that?
-fn test_variable(request: Request) -> ~Response {
-    let year = request.get_context_var_or_fail("year");
+fn test_variable<'a>(request: &'a Request) -> &'a Response {
+    {
+        let mut context = request.context.expect("No context found in the fn test_variable");
+    }
+    // 
+    // let year = request.get_context_var_or_fail("year");
     //do something with the year if you want
-    let context = request.get_context();
+    // let context = request.get_context();
     // let year = match request.context {
     //     Some(str) => str.get("year".to_owned()),
     //     None => fail!("No year was passed in :p Thats weird"),
     // };
 
-    ~Response {
+    Response {
         status: status::Ok, 
-        content: mustache_render(request, "variable.html", Some(context)),
+        content: mustache_render(&request, "variable.html"),
     }
 }
 

@@ -1,12 +1,37 @@
-oxidize
+![logo](https://dl.dropboxusercontent.com/u/37773471/new_oxidize.png)
+
+A very basic web framework for Rust based off ideas from lots of other web frameworks.
+
+Goals
+======
+
+oxidize aims to make it easy to write clean and testable web application that is both fast and safe. Rust as a language has amazing support of many of the things that you would want from a web framework but surprisingly there isn't any rich frameworks yet! oxidize will fill that hole by providing a clean framework that should be simple to use, sufficiently decoupled (able to swap components without having to hack at the core), and fast (just like the goal of rust). As such, a primary milestone of oxidize will be to enter the framework into the web framework benchmarks by TechEmpower.
+
+Rust Verison
 =======
 
-A very basic web framework for Rust based off lots of other web frameworks.
+oxidize tries to keep up with rust master as much as possible, but it is hard to constantly update all of the dependancies, their test cases, oxidize and the example applications. Because of this, for now, the README will contain the latest know hash that it will guarenteed compile for and so if it just so happens to not compile on master, you can at least load that version and it will compile. Once I update it to a rust master I will post a commit hash into the README (it is currently not compiling as of right now). 
 
-Build
+Building Oxidize
 =======
 
-oxidize builds in Rust nightly. if you don't currently have the latest rust, you'll need to update before installing. Building oxidize should be very simple. Just clone --recursive to get oxidize and all of its dependancies and the run make. The make command should recurse into each of the libraries and build them. One of the dependancies is libpcre, so if you don't have it you can usually find it by using your systems package manager to install it. Some other useful make commands you should know are make clean-all which will call make clean on the dependancies as well (if you ever need to rebuild the dependancies this is the most reliable way sadly.) Also make run will run the example hello_world. 
+If you don't currently have the latest rust, you'll need to update to the version listed above. If you are on a debian/ubuntu distro you can run the following commands to add a rust-nightly repo (but be warned that oxidize might not compile on the nightlies until it catches up) 
+
+    sudo add-apt-repository ppa:hansjorg/rust
+    sudo apt-get update
+    sudo apt-get install rust-nightly
+
+Of course if you want to build rust from source, I recommend that you use the clone to the commit hash listed above. After you have a working rustc on your machine it should be simple to compile. You will also need libpcre in order to compile rust-prce so install it through your systems package manager. 
+
+    # get libpcre -- this is an example command for ubuntu
+    sudo apt-get install libpcre3-dev
+
+    # get oxidize and build it
+    git clone --recursive https://github.com/jroweboy/oxidize.git
+    cd oxidize
+    make
+
+Some other useful make commands you should know are `make clean-all` which will call make clean on the dependancies as well. Currently due to my poor make file skills, if you need to rebuild a dependancy you will need to rebuild all of them with `make clean-all`. Another useful command is `make run` will run the example hello_world. 
 
 Contributing
 ============
@@ -19,5 +44,6 @@ Lastly, we need lots of test cases and we also need someone that is good at rust
 Authors
 =======
 
-James Rowe - (jroweboy)
-Robert Hickman - (robhobbes)
+ James Rowe - (jroweboy)
+
+ Robert Hickman - (robhobbes)

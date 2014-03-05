@@ -1,4 +1,8 @@
 # my beautiful handwritten makefile. Bask in its glorious complexity
+
+# TODO: replace this with a much cooler build system. At least it works
+# but if anyone cares it would be nice to use cmake or something
+# Google/Github search for rust cmake, since I know they are out there somewhere
 LINKFLAGS ?= -L lib 
 RUSTFLAGS ?= -O --crate-type=dylib,rlib 
 
@@ -21,22 +25,28 @@ lib/mustache: rust-mustache/Makefile
 	mkdir -p lib
 	touch lib/mustache
 # I originally used the -r option but not everyones machine had that :S
-	cd lib && ln -sf ../rust-mustache/build/libmustache*.rlib .
-	cd lib && ln -sf ../rust-mustache/build/libmustache*.so .
+	#cd lib && ln -sf ../rust-mustache/build/libmustache*.rlib .
+	#cd lib && ln -sf ../rust-mustache/build/libmustache*.so .
+	cp rust-mustache/build/libmustache*.so lib/
+	cp rust-mustache/build/libmustache*.rlib lib/
 
 lib/http: rust-http/Makefile
 	$(MAKE) -C rust-http/
 	mkdir -p lib
 	touch lib/http
-	cd lib && ln -sf ../rust-http/build/libhttp*.rlib .
-	cd lib && ln -sf ../rust-http/build/libhttp*.so .
+	#cd lib && ln -sf ../rust-http/build/libhttp*.rlib .
+	#cd lib && ln -sf ../rust-http/build/libhttp*.so .
+	cp rust-http/build/libhttp*.rlib lib/
+	cp rust-http/build/libhttp*.so lib/
 
 lib/pcre: rust-pcre/Makefile
 	$(MAKE) -C rust-pcre/
 	mkdir -p lib
 	touch lib/pcre
-	cd lib && ln -sf ../rust-pcre/lib/libpcre*.rlib .
-	cd lib && ln -sf ../rust-pcre/lib/libpcre*.so .
+	#cd lib && ln -sf ../rust-pcre/lib/libpcre*.rlib .
+	#cd lib && ln -sf ../rust-pcre/lib/libpcre*.so .
+	cp rust-pcre/lib/libpcre*.rlib lib/
+	cp rust-pcre/lib/libpcre*.so lib/
 
 # Main program
 oxidize: lib/mustache lib/http lib/pcre $(OXIDIZE_LIB)

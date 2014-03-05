@@ -1,10 +1,11 @@
-extern crate http;
 extern crate extra;
 extern crate pcre;
 extern crate collections;
 extern crate time;
 extern crate serialize;
 extern crate mustache;
+extern crate http;
+
 
 // It turns out its real easy to reexport mods :D
 // People that extern mod oxidize can use oxidize::reexported::mod;
@@ -26,6 +27,7 @@ use collections::hashmap::HashMap;
 use pcre::{CompileOption, StudyOption, ExtraOption, Pcre};
 
 use std::cast;
+use std::default::Default;
 use std::io::net::ip::{SocketAddr, Ipv4Addr};
 
 use response::Response;
@@ -48,17 +50,17 @@ static mut reverse_routes_str : Option<HashMap<*(), &'static str>> = None;
 // HashMap::<*(), &'static str>::new();
 
 #[deriving(Clone)]
-pub struct Oxidize {
+pub struct Oxidize<'a> {
     // TODO: use this little piece of awesome I found to allow them to choose port and stuff
     //from_str::<SocketAddr>("127.0.0.1:8080").unwrap()
     // http://static.rust-lang.org/doc/0.9/std/io/index.html Found here
     port: u16,
     addr: ~str,
-    routes: &'static [Route<'static>],
+    routes: &'static [Route<'static, 'a>],
 }
 
 /// Builds a giant regex from all of the routes
-fn compile_routes(routes : &'static [Route<'static>]) {
+fn compile_routes<'a>(routes : &'static [Route<'static, 'a>]) {
     unsafe { reverse_routes_str = Some(HashMap::<*(), &'static str>::new()) };
     let revroute = get_reverse_route_str();
     let mut regex = ~"(?";
@@ -113,9 +115,9 @@ pub fn reverse(fptr: route::View) -> &'static str {
 }
 
 
-impl Oxidize {
+impl<'a> Oxidize<'a> {
 
-    pub fn new(p : u16, a : &str, r : &'static [Route<'static>]) -> Oxidize {
+    pub fn new(p : u16, a : &str, r : &'static [Route<'static, 'a>]) -> Oxidize {
         compile_routes(r);
         Oxidize {
             port : p,
@@ -172,7 +174,7 @@ impl Oxidize {
 }
 
 #[allow(unused_must_use)]
-impl Server for Oxidize {
+impl<'a> Server for Oxidize<'a> {
 
     fn get_config(&self) -> Config {
         // TODO: Read the data and better handle user data (see the struct def)
