@@ -3,19 +3,19 @@ extern crate http;
 use response::Response;
 use request::Request;
 
-pub type View<'a> = fn<'a>(&'a Request) -> &'a Response;
+pub type View = fn (&Request) -> Response; //fn<'a>(&'a Request) -> &'a Response;
 
 //#[deriving(Clone)]
-pub struct Route<'r, 'a> {
+pub struct Route<'r> {
 	method : &'r str,
 	path : &'r str,
-	fptr : fn(&'a Request) -> &'a Response
+	fptr : View, // fn(&'a Request) -> &'a Response
 }
 
-impl<'r, 'a> Route<'r, 'a> {
-    pub fn call<'a>(&'a self, request: &'a Request) -> &'a Response {
+impl<'r> Route<'r> {
+    pub fn call(&self, request: &Request) -> Response {
         println!("Routing calling the function for path [{}]", self.path);
-        let call = self.fptr;
-        call(request)
+        (self.fptr)(request)
+        //call(request)
     }
 }

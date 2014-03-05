@@ -3,9 +3,9 @@
 
 use http;
 use http::method::Method;
-use serialize::Encodable;
 use collections::hashmap::HashMap;
-use mustache::encoder::{Encoder, Data, Str, Vec, Map};
+// use serialize::Encodable;
+// use mustache::encoder::{Encoder, Data, Str, Vec, Map};
 use std::default::Default;
 
 // mustache expects something different :(

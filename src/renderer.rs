@@ -7,9 +7,9 @@ use request::Request;
 
 use std::io::File;
 use std::str::{from_utf8, from_utf8_owned};
-use serialize::Encodable;
-use collections::hashmap::HashMap;
-use mustache::encoder::{Encoder, Data, Str, Vec, Map};
+// use collections::hashmap::HashMap;
+// use serialize::Encodable;
+// use mustache::encoder::{Encoder, Data, Str, Vec, Map};
 
 // #[deriving(Encodable)]
 // pub struct Context {
@@ -19,7 +19,7 @@ use mustache::encoder::{Encoder, Data, Str, Vec, Map};
 
 
 
-//#[allow(unused_variable)]
+#[allow(unused_variable)]
 // removed the context from this. This is a file loader for now.
 // , context: Option<HashMap<~str,~str>>
 pub fn render<'a>(request: &'a Request, file_name: &'a str) -> ~str {
@@ -39,7 +39,7 @@ pub fn render<'a>(request: &'a Request, file_name: &'a str) -> ~str {
     from_utf8_owned(file_contents).expect("File could not be parsed as UTF8")
 }
 
-// #[allow(unused_variable)]
+#[allow(unused_variable)]
 // TODO: at compile or start time, I can use mustache to precompile all the templates
 // and then just render the template from the precomiled version
 // , T: Encodable<Encoder> , context: Option<T>
