@@ -41,6 +41,8 @@ use std::io::net::ip::{SocketAddr, Ipv4Addr};
 
 use response::Response;
 use route::{Route};
+// TODO use a RWArc its much better since its many reader one writer
+// and I'll only be reading almost exclusively
 use sync::MutexArc;
 
 
@@ -63,7 +65,7 @@ pub mod request;
 
 // Except for you evil little one. 
 // TODO: how can I possibly expose a reverse function without static?
-static mut reverse_routes_str : Option<()> = None;
+// static mut reverse_routes_str : Option<()> = None;
 // HashMap::<*(), &'static str>::new();
 
 #[deriving(Clone)]
@@ -84,17 +86,17 @@ pub struct Oxidize {
 //     unsafe { compiled_routes.get_mut_ref() }
 // }
 
-fn get_reverse_route_str() -> &mut HashMap<*(), &'static str> {
-    unsafe { 
-        cast::transmute(reverse_routes_str.get_mut_ref())
-    }
-}
+// fn get_reverse_route_str() -> &mut HashMap<*(), &'static str> {
+//     unsafe { 
+//         cast::transmute(reverse_routes_str.get_mut_ref())
+//     }
+// }
 
 // TODO: move the compiled_routes and the reverse routing everything into route.rs maybe
-pub fn reverse(fptr: route::View) -> &'static str {
-    let fnpointer : &*() = unsafe { cast::transmute(fptr) };
-    *get_reverse_route_str().get(fnpointer)
-}
+// pub fn reverse(fptr: route::View) -> &'static str {
+//     let fnpointer : &*() = unsafe { cast::transmute(fptr) };
+//     *get_reverse_route_str().get(fnpointer)
+// }
 
 
 impl Oxidize {
@@ -108,13 +110,15 @@ impl Oxidize {
         }
     }
 
-    fn route(&self, request: &request::Request, response: &mut ResponseWriter) -> ~str {
+    fn route(&self, request: &mut request::Request, response: &mut ResponseWriter) -> ~str {
         // use the massive regex to route
         //println!("request_uri: {}", request.uri.clone());
-
         // let re = get_compiled_regex();
+
+        // 
+        let uri = request.uri.clone();
         let regex_result = self.compiled_routes.access(
-            |re: &mut Pcre| {re.exec(request.uri)}
+            |re: &mut Pcre| {re.exec(uri)}
         );
 
         // TODO: clean up this crazy massive match tree using functions found in Option
@@ -155,11 +159,11 @@ impl Oxidize {
     /// Builds a giant regex from all of the routes
     fn compile_routes(routes : &'static [Route<'static>]) -> MutexArc<Pcre> {
         // pure evil unsafeness right here
-        unsafe { reverse_routes_str = Some(
-            // removing the destructor from HashMap so I can store it in a mut static :p
-                cast::forget::<HashMap<*(), &'static str>>(HashMap::<*(), &'static str>::new())
-        )};
-        let revroute = get_reverse_route_str();
+        // unsafe { reverse_routes_str = Some(
+        //     // removing the destructor from HashMap so I can store it in a mut static :p
+        //         cast::forget::<HashMap<*(), &'static str>>(HashMap::<*(), &'static str>::new())
+        // )};
+        // let revroute = get_reverse_route_str();
         let mut regex = ~"(?";
         let mut i : u32 = 0;
         for route in routes.iter() {
@@ -171,7 +175,7 @@ impl Oxidize {
             regex.push_str(i.to_str());
             regex.push_str(")");
             let fnpointer : *() = unsafe { cast::transmute(route.fptr) };
-            revroute.insert(fnpointer, route.path);
+            // revroute.insert(fnpointer, route.path);
             i += 1;
         }
         regex.push_str(")");
@@ -203,7 +207,6 @@ impl Oxidize {
         compiled_routes.access(
             |re: &mut Pcre| { re.set_extra_options(&extra_options); }
         );
-
         compiled_routes
     }
 
@@ -239,12 +242,12 @@ impl Server for Oxidize {
             Some(m) => m,
             None => http::method::Get
         };
-        let my_request = request::Request {
+        let my_request = &mut request::Request {
             method: test_method, 
             uri: path,
             ..Default::default()
         };
-        let response_body = self.route(&my_request,res);
+        let response_body = self.route(my_request,res);
 
         res.headers.content_type = Some(headers::content_type::MediaType {
             type_: ~"text",

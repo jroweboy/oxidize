@@ -3,7 +3,9 @@ extern crate http;
 use response::Response;
 use request::Request;
 
-pub type View = fn (&Request) -> Response; //fn<'a>(&'a Request) -> &'a Response;
+// Left off here
+// TODO change this to a &mut so that it moves the request.
+pub type View = fn (&mut Request) -> Response; //fn<'a>(&'a Request) -> &'a Response;
 
 //#[deriving(Clone)]
 pub struct Route<'r> {
@@ -13,7 +15,7 @@ pub struct Route<'r> {
 }
 
 impl<'r> Route<'r> {
-    pub fn call(&self, request: &Request) -> Response {
+    pub fn call(&self, request: &mut Request) -> Response {
         println!("Routing calling the function for path [{}]", self.path);
         (self.fptr)(request)
         //call(request)
