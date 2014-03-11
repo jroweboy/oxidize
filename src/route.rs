@@ -10,6 +10,7 @@ pub type View = fn (&mut Request) -> Response; //fn<'a>(&'a Request) -> &'a Resp
 //#[deriving(Clone)]
 pub struct Route<'r> {
 	method : &'r str,
+	name : &'r str,
 	path : &'r str,
 	fptr : View, // fn(&'a Request) -> &'a Response
 }

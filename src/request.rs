@@ -4,6 +4,7 @@
 use http;
 use http::method::Method;
 use collections::hashmap::HashMap;
+use sync::RWArc;
 // use serialize::Encodable;
 // use mustache::encoder::{Encoder, Data, Str, Vec, Map};
 use std::default::Default;
@@ -22,7 +23,8 @@ pub struct Request {
     uri: ~str,
     GET : Option<HashMap<~str, ~str>>,
     POST : Option<HashMap<~str, ~str>>,
-    context : Option<HashMap<~str,~str>>
+    context : Option<HashMap<~str,~str>>,
+    reverse_routes : RWArc<HashMap<~str,~str>>
     //context : Option<HashMap<~str, Data>>,
 }
 
@@ -33,7 +35,10 @@ impl Default for Request {
             uri: "index.html".to_owned(),
             GET: None,
             POST: None,
-            context: None
+            context: None,
+            reverse_routes : RWArc::<HashMap<~str, ~str>>::new(
+                HashMap::<~str, ~str>::new()
+            )
         }
     }
 }
@@ -56,4 +61,12 @@ impl Request {
     //     let map = self.context.expect("No context found");
     //     &'a Encoder { data: ~[Map(map.clone())] }
     // }
+
+    pub fn reverse(&self, name: ~str) -> Option<~str> {
+        self.reverse_routes.read(
+            |rr: & HashMap<~str, ~str>| { rr.find_equiv(&name).and_then(
+                |path: &~str| { Some(path.clone()) }
+            ) }
+        )
+    }
 }

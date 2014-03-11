@@ -44,6 +44,8 @@ use route::{Route};
 // TODO use a RWArc its much better since its many reader one writer
 // and I'll only be reading almost exclusively
 use sync::MutexArc;
+use sync::RWArc;
+
 
 
 pub mod route;
@@ -77,7 +79,8 @@ pub struct Oxidize {
     addr: ~str,
     // TODO: do i even need to store them in here? Looks like it
     routes: &'static [Route<'static>],
-    compiled_routes: MutexArc<Pcre>
+    compiled_routes: MutexArc<Pcre>,
+    reverse_routes: RWArc<HashMap<~str, ~str>>
 }
 
 
@@ -106,7 +109,8 @@ impl Oxidize {
             port : p,
             addr : a.to_owned(),
             routes : r,
-            compiled_routes : Oxidize::compile_routes(r)
+            compiled_routes : Oxidize::compile_routes(r),
+            reverse_routes : Oxidize::reverse_routes(r)
         }
     }
 
@@ -210,6 +214,20 @@ impl Oxidize {
         compiled_routes
     }
 
+    fn reverse_routes(routes : &'static [Route<'static>]) -> RWArc<HashMap<~str, ~str>> {
+        let reverse_routes = RWArc::<HashMap<~str, ~str>>::new(
+            HashMap::<~str, ~str>::new()
+        );
+
+        for route in routes.iter() {
+            reverse_routes.write(
+                |rr: &mut HashMap<~str, ~str>| { rr.insert(route.name.to_owned(),route.path.to_owned()); }
+            );
+        }
+
+        reverse_routes
+    }
+
     // The Server trait has serve_forever as private, so this is my hackish way to expose it
     // TODO maybe ask upstream to change that?
     pub fn serve(self) {
@@ -217,6 +235,7 @@ impl Oxidize {
         println!("Server is now running at {}", addr.to_str());
         self.serve_forever();
     }
+
 }
 
 #[allow(unused_must_use)]
@@ -243,6 +262,7 @@ impl Server for Oxidize {
             None => http::method::Get
         };
         let my_request = &mut request::Request {
+            reverse_routes: self.reverse_routes.clone(),
             method: test_method, 
             uri: path,
             ..Default::default()

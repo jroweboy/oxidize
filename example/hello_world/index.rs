@@ -11,9 +11,9 @@ use collections::hashmap::HashMap;
 
 // TODO maybe make an awesome macro to allow a user to declare a beautiful looking routes
 static routes: &'static [Route<'static>] = &[
-    Route { method: "GET", path: "^/$", fptr: index},
-    Route { method: "GET", path: "^/test/?$", fptr: test_mustache},
-    Route { method: "GET", path: "^/test/(?P<year>\\d{4})/?$", fptr: test_variable},
+    Route { method: "GET", name: "index", path: "^/$", fptr: index},
+    Route { method: "GET", name: "test_mustache", path: "^/test/?$", fptr: test_mustache},
+    Route { method: "GET", name: "test_variable", path: "^/test/(?P<year>\\d{4})/?$", fptr: test_variable},
 ];
 
 //SimpleRoute { method: "GET", path: "/test/:year/:month", fptr: test_variable },
@@ -33,6 +33,7 @@ fn test_mustache(request: &mut Request) -> Response {
     context.insert("firstName".to_owned(), "Jim".to_owned());
     context.insert("lastName".to_owned(), "Bob".to_owned());
     context.insert("blogURL".to_owned(), "http://notarealurl.com :p".to_owned());
+    context.insert(~"reverse_index", request.reverse(~"index").unwrap_or(~"no such route"));
     //request.context = Some(context);
 
     Response {
