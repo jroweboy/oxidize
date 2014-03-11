@@ -3,7 +3,6 @@ extern crate collections;
 
 use oxidize::{Oxidize, Request, Response, Route};
 use oxidize::renderer::{render, mustache_render};
-// reexported the status from rust-http ahahaha
 use oxidize::status;
 
 use collections::hashmap::HashMap;
@@ -19,6 +18,7 @@ static routes: &'static [Route<'static>] = &[
 //SimpleRoute { method: "GET", path: "/test/:year/:month", fptr: test_variable },
 //StaticServe { method: "GET", path: "/static/*", directory: "/path/to/files" },
 
+// TODO write directly into the response instead of making a new one
 fn index(request: &mut Request) -> Response {
     Response {
     	status: status::Ok, 
@@ -29,10 +29,9 @@ fn index(request: &mut Request) -> Response {
 fn test_mustache(request: &mut Request) -> Response {
     //let ref c = request.context;
     let mut context = HashMap::<~str, ~str>::new();//c.unwrap_or(HashMap::<~str, ~str>::new());
-    // TODO I hate putting to_owned every time like this :p It maybe shouldn't be owned?
-    context.insert("firstName".to_owned(), "Jim".to_owned());
-    context.insert("lastName".to_owned(), "Bob".to_owned());
-    context.insert("blogURL".to_owned(), "http://notarealurl.com :p".to_owned());
+    context.insert(~"firstName", ~"Jim");
+    context.insert(~"lastName", ~"Bob");
+    context.insert(~"blogURL", ~"http://notarealurl.com :p");
     //request.context = Some(context);
 
     Response {

@@ -7,3 +7,6 @@
 [submodule "rust-mustache"]
 	path = rust-mustache
 	url = https://github.com/jroweboy/rust-mustache.git
+[submodule "rust-postgres"]
+	path = rust-postgres
+	url = https://github.com/jroweboy/rust-postgres.git

@@ -4,7 +4,7 @@
 # but if anyone cares it would be nice to use cmake or something
 # Google/Github search for rust cmake, since I know they are out there somewhere
 LINKFLAGS ?= -L lib 
-RUSTFLAGS ?= -O --crate-type=dylib,rlib 
+RUSTFLAGS ?= --crate-type=dylib,rlib 
 
 example_hello_world=\
 			example/hello_world/index.rs
