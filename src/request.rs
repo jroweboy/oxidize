@@ -24,7 +24,7 @@ pub struct Request {
     GET : Option<HashMap<~str, ~str>>,
     POST : Option<HashMap<~str, ~str>>,
     context : Option<HashMap<~str,~str>>,
-    reverse_routes : RWArc<HashMap<~str,~str>>
+    priv reverse_routes : RWArc<HashMap<~str,~str>>
     //context : Option<HashMap<~str, Data>>,
 }
 
@@ -68,5 +68,17 @@ impl Request {
                 |path: &~str| { Some(path.clone()) }
             ) }
         )
+    }
+
+    pub fn set_reverse_routes(&self, reverse_routes: RWArc<HashMap<~str,~str>>) {
+        reverse_routes.read(
+            |other_rr: & HashMap<~str, ~str>| {
+                for (k,v) in other_rr.iter() {
+                    self.reverse_routes.write(
+                        |rr: &mut HashMap<~str, ~str>| { rr.insert(k.clone(),v.clone()); }
+                    );
+                }
+            }
+        );
     }
 }

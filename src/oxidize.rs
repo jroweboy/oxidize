@@ -262,11 +262,11 @@ impl Server for Oxidize {
             None => http::method::Get
         };
         let my_request = &mut request::Request {
-            reverse_routes: self.reverse_routes.clone(),
             method: test_method, 
             uri: path,
             ..Default::default()
         };
+        my_request.set_reverse_routes(self.reverse_routes.clone());
         let response_body = self.route(my_request,res);
 
         res.headers.content_type = Some(headers::content_type::MediaType {
