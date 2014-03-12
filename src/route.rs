@@ -14,20 +14,24 @@ use sync::RWArc;
 pub type View = fn (&Request, &mut ResponseWriter); //fn<'a>(&'a Request) -> &'a Response;
 
 //#[deriving(Clone)]
-pub struct Route<'r> {
+pub struct RegexRoute<'r> {
 	method : &'r str,
 	path : &'r str,
 	fptr : View,
 }
 
-impl<'r> Route<'r> {
-    pub fn call(&self, request: &Request, response: &mut ResponseWriter) {
+impl<'r> Route<'r> for RegexRoute<'r> {
+    fn call(&self, request: &Request, response: &mut ResponseWriter) {
         println!("Routing calling the function for path [{}]", self.path);
         (self.fptr)(request, response)
     }
 }
 
-pub trait Router {
+pub trait Route<'r> {
+    fn call(&self, request: &Request, response: &mut ResponseWriter);
+}
+
+pub trait Router : Send {
     fn route(&self, request: &mut Request, response: &mut ResponseWriter);
     fn reverse(&self, name: &str, vars: Option<HashMap<~str,~str>>) -> Option<&~str>;
     // fn copy(&self) -> ~Router;
@@ -41,7 +45,7 @@ pub trait Router {
 
 #[deriving(Clone)]
 pub struct RegexRouter {
-    routes: &'static [Route<'static>],
+    routes: &'static [RegexRoute<'static>],
     compiled_routes: RWArc<Pcre>,
 }
 
@@ -69,30 +73,16 @@ impl Router for RegexRouter {
                 };
             }
         };
-
-        // let reason = response.status.reason();
-        // let code = response.status.code();
-
-        // let newStatus = Status::from_code_and_reason(code,reason);
-
-        // response.status = newStatus;
-        // return response.content;
     }
+
     #[allow(unused_variable)]
     fn reverse(&self, name: &str, vars: Option<HashMap<~str,~str>>) -> Option<&~str> {
         None
     }
-
-    // fn copy(&self) -> ~Router {
-    //     ~RegexRouter {
-    //         routes: self.routes.clone(),
-    //         compiled_routes: compile_routes(self.routes.clone()),
-    //     } as ~Router
-    // }
 }
 
 /// Helper method to build a regex out of all the routes
-fn compile_routes(routes : &'static [Route<'static>]) -> RWArc<Pcre> {
+fn compile_routes(routes : &'static [RegexRoute<'static>]) -> RWArc<Pcre> {
     // pure evil unsafeness right here
     let mut regex = ~"(?";
     let mut i : u32 = 0;
@@ -136,12 +126,10 @@ fn compile_routes(routes : &'static [Route<'static>]) -> RWArc<Pcre> {
 }
 
 impl RegexRouter {
-    fn new(routes: &'static [Route<'static>]) -> RegexRouter {
+    pub fn new(routes: &'static [RegexRoute<'static>]) -> RegexRouter {
         RegexRouter {
             routes: routes,
             compiled_routes: compile_routes(routes),
         }
     }
 }
-
-// Oxidize { Conf { Router { .route() .match() .compile() } } }

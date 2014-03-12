@@ -1,14 +1,12 @@
+use route::{Router};
+use sync::Arc;
 use std::io::net::ip::SocketAddr;
-use route::Router;
-use std::rc::Rc;
-// use renderer::Template;
 
-#[deriving(Clone)]
 pub struct Config {
     debug : bool,
     bind_addr : SocketAddr,
-    // bind_port : uint,
-    router : Rc<~Router>,
+    // routes : &'static [~Route<'static>:Send+Freeze],
+    router : Arc<~Router:Send+Freeze>,
     // TODO: Add these other fields
     // db : &'a DatabaseThingy,
     // middleware : 
@@ -16,3 +14,6 @@ pub struct Config {
     // template_dir : Path, // should this be a part of Template?
     // add whatever other plugable things we wanna make
 }
+
+// impl Config {
+//     pub fn new(debug: bool, 
