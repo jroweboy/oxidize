@@ -9,43 +9,32 @@ use request;
 use pcre;
 use sync::RWArc;
 
-// Left off here
-// TODO change this to a &mut so that it moves the request.
-pub type View = fn (&Request, &mut ResponseWriter); //fn<'a>(&'a Request) -> &'a Response;
+pub type View = fn (&Request, &mut ResponseWriter);
 
-//#[deriving(Clone)]
-pub struct RegexRoute<'r> {
-	method : &'r str,
-	path : &'r str,
+pub struct RegexRoute {
+	method : &'static str,
+	path : &'static str,
 	fptr : View,
 }
 
-impl<'r> Route<'r> for RegexRoute<'r> {
+impl Route for RegexRoute {
     fn call(&self, request: &Request, response: &mut ResponseWriter) {
         println!("Routing calling the function for path [{}]", self.path);
         (self.fptr)(request, response)
     }
 }
 
-pub trait Route<'r> {
+pub trait Route : Send+Freeze {
     fn call(&self, request: &Request, response: &mut ResponseWriter);
 }
 
-pub trait Router : Send {
+pub trait Router : Send+Freeze {
     fn route(&self, request: &mut Request, response: &mut ResponseWriter);
     fn reverse(&self, name: &str, vars: Option<HashMap<~str,~str>>) -> Option<&~str>;
-    // fn copy(&self) -> ~Router;
 }
 
-// impl Clone for ~Router {
-//     fn clone(&self) -> ~Router {
-//          self.copy()
-//     }
-// }
-
-#[deriving(Clone)]
 pub struct RegexRouter {
-    routes: &'static [RegexRoute<'static>],
+    routes: &'static [RegexRoute],
     compiled_routes: RWArc<Pcre>,
 }
 
@@ -82,7 +71,7 @@ impl Router for RegexRouter {
 }
 
 /// Helper method to build a regex out of all the routes
-fn compile_routes(routes : &'static [RegexRoute<'static>]) -> RWArc<Pcre> {
+fn compile_routes(routes : &'static [RegexRoute]) -> RWArc<Pcre> {
     // pure evil unsafeness right here
     let mut regex = ~"(?";
     let mut i : u32 = 0;
@@ -126,7 +115,7 @@ fn compile_routes(routes : &'static [RegexRoute<'static>]) -> RWArc<Pcre> {
 }
 
 impl RegexRouter {
-    pub fn new(routes: &'static [RegexRoute<'static>]) -> RegexRouter {
+    pub fn new(routes: &'static [RegexRoute]) -> RegexRouter {
         RegexRouter {
             routes: routes,
             compiled_routes: compile_routes(routes),

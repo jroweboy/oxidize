@@ -1,12 +1,12 @@
 use route::{Router};
-use sync::Arc;
+use sync::RWArc;
 use std::io::net::ip::SocketAddr;
 
 pub struct Config {
     debug : bool,
     bind_addr : SocketAddr,
     // routes : &'static [~Route<'static>:Send+Freeze],
-    router : Arc<~Router:Send+Freeze>,
+    router : RWArc<~Router:Send+Freeze>,
     // TODO: Add these other fields
     // db : &'a DatabaseThingy,
     // middleware : 
