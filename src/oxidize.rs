@@ -31,7 +31,7 @@ use std::default::Default;
 
 use conf::Config;
 use route::Router;
-use sync::Arc;
+use sync::{Arc, RWArc};
 
 pub mod route;
 pub mod renderer;
@@ -41,12 +41,33 @@ pub mod conf;
 #[deriving(Clone)]
 pub struct Oxidize {
     conf: Arc<Config>,
+    // routes : &'static [~Route<'static>:Send+Freeze],
+    router: Arc<~Router:Freeze+Send>,
+    // TODO: Add these other fields
+    // db : &'a DatabaseThingy,
+    // middleware : 
+    // template : &'a Template,
+    // template_dir : Path, // should this be a part of Template?
+    // add whatever other plugable things we wanna make
 }
 
+// impl Default for Oxidize {
+//     fn default() -> Oxidize {
+//         Oxidize {
+//             conf : Arc::new(Config {
+//                 debug: true,
+//                 bind_addr: from_str<SocketAddr>("127.0.0.1:8000").unwrap(),
+//             }),
+//             router : Arc::new(~RegexRouter
+//         }
+//     }
+// }
+
 impl Oxidize {
-    pub fn new(conf: Config) -> Oxidize {
+    pub fn new(conf: Config, router: ~Router:Send+Freeze) -> Oxidize {
         Oxidize {
-            conf : Arc::new(conf),
+            conf: Arc::new(conf),
+            router: Arc::new(router),
         }
     }
 
@@ -83,9 +104,10 @@ impl Server for Oxidize {
             ..Default::default()
         };
 
-        self.conf.get().router.get().route(my_request, response);
+        self.//router.read(|router : &~Router| {
+            router.get().route(my_request, response);
+        //});
 
-        // self.conf.router.borrow().route(my_request, response);
         // let router = self.conf.router;
         // let response_body = router.route(my_request,res);
 

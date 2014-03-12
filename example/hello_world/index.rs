@@ -13,7 +13,7 @@ use sync::Arc;
 
 
 // TODO maybe make an awesome macro to allow a user to declare a beautiful looking routes
-static routes: &'static [RegexRoute<'static>] = &[
+static routes: &'static [RegexRoute] = &[
     RegexRoute { method: "GET", path: "^/$", fptr: index},
     RegexRoute { method: "GET", path: "^/test/?$", fptr: test_mustache},
     RegexRoute { method: "GET", path: "^/test/(?P<year>\\d{4})/?$", fptr: test_variable},
@@ -54,13 +54,14 @@ fn test_variable(request: &Request, response: &mut ResponseWriter) {
 
 
 fn main() {
-    let router = Arc::new(~RegexRouter::new(routes) as ~Router:Send+Freeze);
+    // TODO clean this up so its nicer
+    let router = ~RegexRouter::new(routes);
     // TODO add defaults to Config
     let conf = Config {
         debug: true,
-        bind_addr: from_str::<SocketAddr>("127.0.0.1:8000").unwrap(),
-        router : router,
+        bind_addr: from_str::<SocketAddr>("127.0.0.1:8001").unwrap(),
     };
-    let server = Oxidize::new(conf);
+
+    let server = Oxidize::new(conf, router as ~Router:Send+Freeze);
     server.serve();
 }
