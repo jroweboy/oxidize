@@ -26,28 +26,18 @@ pub use http::server::ResponseWriter;
 
 // I'm explicitly including http::server::Request right now
 // since I have a struct also named Request
-use http::server::{Config, Server, ResponseWriter}; 
+use http::server::{Server, ResponseWriter}; 
 use http::server::request::{Star, AbsoluteUri, AbsolutePath, Authority};
-use http::headers;
-use http::status;
-use http::status::Status;
-use collections::enum_set::{EnumSet};
-use collections::hashmap::HashMap;
-use pcre::{CompileOption, StudyOption, ExtraOption, Pcre};
-
-use std::cast;
 use std::default::Default;
-use std::io::net::ip::{SocketAddr, Ipv4Addr};
 
-use response::Response;
+// use response::Response;
 use conf::Config;
 use route::{Route};
-use sync::RWArc;
 
 
 pub mod route;
 pub mod renderer;
-pub mod response;
+// pub mod response;
 pub mod request;
 pub mod conf;
 
@@ -123,7 +113,7 @@ impl Server for Oxidize {
             ..Default::default()
         };
 
-        self.conf.router.route(my_request, response);
+        self.conf.router.borrow().route(my_request, response);
         // let router = self.conf.router;
         // let response_body = router.route(my_request,res);
 

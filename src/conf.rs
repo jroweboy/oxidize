@@ -1,5 +1,6 @@
 use std::io::net::ip::SocketAddr;
 use route::Router;
+use std::rc::Rc;
 // use renderer::Template;
 
 #[deriving(Clone)]
@@ -7,7 +8,7 @@ pub struct Config {
     debug : bool,
     bind_addr : SocketAddr,
     // bind_port : uint,
-    router : ~Router,
+    router : Rc<~Router>,
     // TODO: Add these other fields
     // db : &'a DatabaseThingy,
     // middleware : 

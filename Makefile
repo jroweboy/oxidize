@@ -12,7 +12,8 @@ example_hello_world=\
 oxidize_files=\
 			src/oxidize.rs\
 			src/renderer.rs\
-			src/route.rs
+			src/route.rs\
+			src/conf.rs
 
 OXIDIZE_LIB = build/liboxidize-a719aadf-0.0.so
 

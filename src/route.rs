@@ -1,11 +1,9 @@
 // extern crate http;
 
-use response::Response;
 use request::Request;
 use http::server::ResponseWriter;
 use collections::hashmap::HashMap;
 use collections::enum_set::{EnumSet};
-use http::status::Status;
 use pcre::{CompileOption, StudyOption, ExtraOption, Pcre};
 use request;
 use pcre;
@@ -30,16 +28,16 @@ impl<'r> Route<'r> {
 }
 
 pub trait Router {
-    fn new(routes: &'static [Route<'static>]) -> ~Router;
     fn route(&self, request: &mut Request, response: &mut ResponseWriter);
     fn reverse(&self, name: &str, vars: Option<HashMap<~str,~str>>) -> Option<&~str>;
+    // fn copy(&self) -> ~Router;
 }
 
-impl Clone for ~Router {
-    fn clone(&self) -> ~Router {
-         ~(**self).clone()
-    }
-}
+// impl Clone for ~Router {
+//     fn clone(&self) -> ~Router {
+//          self.copy()
+//     }
+// }
 
 #[deriving(Clone)]
 pub struct RegexRouter {
@@ -48,13 +46,6 @@ pub struct RegexRouter {
 }
 
 impl Router for RegexRouter {
-    fn new(routes: &'static [Route<'static>]) -> ~Router {
-        ~RegexRouter {
-            routes: routes,
-            compiled_routes: compile_routes(routes),
-        } as ~Router
-    }
-
     fn route(&self, request: &mut request::Request, response: &mut ResponseWriter) {
         // use the massive regex to route
         let uri = request.uri.clone();
@@ -62,33 +53,6 @@ impl Router for RegexRouter {
             |re: &Pcre| {re.exec(uri)}
         );
 
-        // TODO: clean up this crazy massive match tree using functions found in Option
-        // let resp = match regex_result {
-        //     Some(_) => {
-        //         // get the mark index
-        //         let raw_mark = self.compiled_routes.read (
-        //             |re: &Pcre| { re.get_mark() }
-        //         );
-        //         let index = match raw_mark {
-        //             // and convert the string to an int
-        //             Some(m) => {println!("mark: {}", m); from_str::<int>(m)},
-        //             None => None
-        //         };
-        //         // if we got an int then we can use that as the index in the route array
-        //         match index {
-        //             Some(i) => Some(self.routes[i].call(request)),
-        //             None => None
-        //         }
-        //     },
-        //     None => None
-        // };
-
-        // let res = match resp {
-        //     Some(res) => res,
-        //     None => Response {status: status::NotFound, content: ~"404 - Not Found"}
-        // };
-
-        //regex_result.and_then(|_| {
         match regex_result {
             None => (),
             Some(_) => {
@@ -106,18 +70,25 @@ impl Router for RegexRouter {
             }
         };
 
-        let reason = response.status.reason();
-        let code = response.status.code();
+        // let reason = response.status.reason();
+        // let code = response.status.code();
 
-        let newStatus = Status::from_code_and_reason(code,reason);
+        // let newStatus = Status::from_code_and_reason(code,reason);
 
-        response.status = newStatus;
+        // response.status = newStatus;
         // return response.content;
     }
-
+    #[allow(unused_variable)]
     fn reverse(&self, name: &str, vars: Option<HashMap<~str,~str>>) -> Option<&~str> {
         None
     }
+
+    // fn copy(&self) -> ~Router {
+    //     ~RegexRouter {
+    //         routes: self.routes.clone(),
+    //         compiled_routes: compile_routes(self.routes.clone()),
+    //     } as ~Router
+    // }
 }
 
 /// Helper method to build a regex out of all the routes
@@ -164,7 +135,13 @@ fn compile_routes(routes : &'static [Route<'static>]) -> RWArc<Pcre> {
     compiled_routes
 }
 
-// impl RegexRouter {
-// }
+impl RegexRouter {
+    fn new(routes: &'static [Route<'static>]) -> RegexRouter {
+        RegexRouter {
+            routes: routes,
+            compiled_routes: compile_routes(routes),
+        }
+    }
+}
 
 // Oxidize { Conf { Router { .route() .match() .compile() } } }
