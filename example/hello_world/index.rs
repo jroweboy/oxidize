@@ -62,6 +62,6 @@ fn main() {
         bind_addr: from_str::<SocketAddr>("127.0.0.1:8001").unwrap(),
     };
 
-    let server = Oxidize::new(conf, router as ~Router:Send+Freeze);
+    let server = Oxidize::new(conf, router as ~Router);
     server.serve();
 }

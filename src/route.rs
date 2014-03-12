@@ -8,6 +8,7 @@ use pcre::{CompileOption, StudyOption, ExtraOption, Pcre};
 use request;
 use pcre;
 use sync::RWArc;
+use std::cell::RefCell;
 
 pub type View = fn (&Request, &mut ResponseWriter);
 
@@ -29,21 +30,22 @@ impl RegexRoute {
 //     fn call(&self, request: &Request, response: &mut ResponseWriter);
 // }
 
-pub trait Router : Send+Freeze {
+pub trait Router {
     fn route(&self, request: &mut Request, response: &mut ResponseWriter);
     fn reverse(&self, name: &str, vars: Option<HashMap<~str,~str>>) -> Option<&~str>;
+    fn copy(&self) -> ~Router;
 }
 
 pub struct RegexRouter {
     routes: &'static [RegexRoute],
-    compiled_routes: Pcre,
+    compiled_routes: RWArc<Pcre>,
 }
 
 impl Router for RegexRouter {
     fn route(&self, request: &mut request::Request, response: &mut ResponseWriter) {
         // use the massive regex to route
         let uri = request.uri.clone();
-        let regex_result = self.compiled_routes.exec(uri);
+        let regex_result = self.compiled_routes.write(|re: &mut Pcre| {re.exec(uri)});
 
         // .read (
         //     |re: &Pcre| {re.exec(uri)}
@@ -51,9 +53,9 @@ impl Router for RegexRouter {
 
         let success = match regex_result {
             None => None,
-            Some(_) => {
+            Some(pcre_match) => {
                 // get the mark to find the index of the route in the routes
-                let mark = self.compiled_routes.get_mark(); //.read (|re: &Pcre| { re.get_mark() });
+                let mark = pcre_match.mark;//self.compiled_routes.get_mark(); //.read (|re: &Pcre| { re.get_mark() });
                 println!("Mark problem I bet :p {}", mark);
                 // convert the mark to an int and call the appropriate function
                 let index = match mark {
@@ -72,6 +74,19 @@ impl Router for RegexRouter {
     #[allow(unused_variable)]
     fn reverse(&self, name: &str, vars: Option<HashMap<~str,~str>>) -> Option<&~str> {
         None
+    }
+
+    fn copy(&self) -> ~Router {
+        ~RegexRouter {
+            routes: self.routes.clone(),
+            compiled_routes: self.compiled_routes.clone(),
+        } as ~Router
+    }
+}
+
+impl Clone for ~Router {
+    fn clone(&self) -> ~Router {
+        self.copy()
     }
 }
 
@@ -126,7 +141,7 @@ impl RegexRouter {
 
         RegexRouter {
             routes: routes,
-            compiled_routes: compile_routes(routes),
+            compiled_routes: RWArc::new(compile_routes(routes)),
         }
     }
 }

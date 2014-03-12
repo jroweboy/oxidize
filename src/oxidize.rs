@@ -32,6 +32,7 @@ use std::default::Default;
 use conf::Config;
 use route::Router;
 use sync::{Arc, RWArc};
+use std::cell::RefCell;
 
 pub mod route;
 pub mod renderer;
@@ -42,7 +43,7 @@ pub mod conf;
 pub struct Oxidize {
     conf: Arc<Config>,
     // routes : &'static [~Route<'static>:Send+Freeze],
-    router: Arc<~Router:Freeze+Send>,
+    router: RefCell<~Router>,
     // TODO: Add these other fields
     // db : &'a DatabaseThingy,
     // middleware : 
@@ -64,10 +65,10 @@ pub struct Oxidize {
 // }
 
 impl Oxidize {
-    pub fn new(conf: Config, router: ~Router:Send+Freeze) -> Oxidize {
+    pub fn new(conf: Config, router: ~Router) -> Oxidize {
         Oxidize {
             conf: Arc::new(conf),
-            router: Arc::new(router),
+            router: RefCell::new(router),
         }
     }
 
@@ -104,9 +105,11 @@ impl Server for Oxidize {
             ..Default::default()
         };
 
-        self.//router.read(|router : &~Router| {
-            router.get().route(my_request, response);
-        //});
+        self.router.with(|r: &~Router| {r.route(my_request, response);});
+
+        // self.//router.read(|router : &~Router| {
+        //     router.get().route(my_request, response);
+        // //});
 
         // let router = self.conf.router;
         // let response_body = router.route(my_request,res);
