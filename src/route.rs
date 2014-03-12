@@ -29,10 +29,16 @@ impl<'r> Route<'r> {
     }
 }
 
-pub trait Router : Clone {
+pub trait Router {
     fn new(routes: &'static [Route<'static>]) -> ~Router;
     fn route(&self, request: &mut Request, response: &mut ResponseWriter);
     fn reverse(&self, name: &str, vars: Option<HashMap<~str,~str>>) -> Option<&~str>;
+}
+
+impl Clone for ~Router {
+    fn clone(&self) -> ~Router {
+         ~(**self).clone()
+    }
 }
 
 #[deriving(Clone)]
@@ -42,7 +48,7 @@ pub struct RegexRouter {
 }
 
 impl Router for RegexRouter {
-    pub fn new(routes: &'static [Route<'static>]) -> ~Router {
+    fn new(routes: &'static [Route<'static>]) -> ~Router {
         ~RegexRouter {
             routes: routes,
             compiled_routes: compile_routes(routes),
@@ -109,7 +115,7 @@ impl Router for RegexRouter {
         // return response.content;
     }
 
-    pub fn reverse(&self, name: &str, vars: Option<HashMap<~str,~str>>) -> Option<&~str> {
+    fn reverse(&self, name: &str, vars: Option<HashMap<~str,~str>>) -> Option<&~str> {
         None
     }
 }

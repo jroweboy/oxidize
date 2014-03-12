@@ -102,9 +102,9 @@ impl Server for Oxidize {
         http::server::Config { bind_address: self.conf.bind_addr }
     }
 
-    fn handle_request(&self, req: &http::server::Request, res: &mut ResponseWriter) {
-        res.headers.date = Some(time::now_utc());
-        res.headers.server = Some(~"Oxidize/0.0.0 (Ubuntu)");
+    fn handle_request(&self, req: &http::server::Request, response: &mut ResponseWriter) {
+        response.headers.date = Some(time::now_utc());
+        response.headers.server = Some(~"Oxidize/0.0.0 (Ubuntu)");
 
         // create a request object
         let path = match req.request_uri {
@@ -123,16 +123,17 @@ impl Server for Oxidize {
             ..Default::default()
         };
 
-        let router = self.conf.router;
-        let response_body = router.route(my_request,res);
+        self.conf.router.route(my_request, response);
+        // let router = self.conf.router;
+        // let response_body = router.route(my_request,res);
 
-        res.headers.content_type = Some(headers::content_type::MediaType {
-            type_: ~"text",
-            subtype: ~"html",
-            parameters: ~[]
-        });
+        // res.headers.content_type = Some(headers::content_type::MediaType {
+        //     type_: ~"text",
+        //     subtype: ~"html",
+        //     parameters: ~[]
+        // });
 
-        res.headers.content_length = Some(response_body.len());
-        res.write(response_body.as_bytes());
+        // res.headers.content_length = Some(response_body.len());
+        // res.write(response_body.as_bytes());
     }
 }
