@@ -1,29 +1,17 @@
 extern crate oxidize;
 extern crate collections;
-extern crate sync;
 
 use oxidize::{Oxidize, Request, ResponseWriter, Config, MediaType};
-use oxidize::route::{RegexRouter, RegexRoute, Router};
+use oxidize::route::Router;
+use oxidize::route::regexrouter::{RegexRouter, RegexRoute, Route, Regex, Simple};
 use oxidize::renderer::{render, mustache_render};
 use oxidize::status;
-
 use collections::hashmap::HashMap;
 use std::io::net::ip::SocketAddr;
-use sync::Arc;
 
-
-// TODO maybe make an awesome macro to allow a user to declare a beautiful looking routes
-static routes: &'static [RegexRoute] = &[
-    RegexRoute { method: "GET", path: "^/$", fptr: index},
-    RegexRoute { method: "GET", path: "^/test/?$", fptr: test_mustache},
-    RegexRoute { method: "GET", path: "^/test/(?P<year>\\d{4})/?$", fptr: test_variable},
-];
-
-//SimpleRoute { method: "GET", path: "/test/:year/:month", fptr: test_variable },
-//StaticServe { method: "GET", path: "/static/*", directory: "/path/to/files" },
-
+#[allow(unused_must_use)]
 fn index(request: &Request, response: &mut ResponseWriter) {
-    // TODO: maybe make a macro to make this look nicer? But is is faster at least :p
+    // TODO: maybe make a macro to make this look nicer? But this is faster at least :p
     response.status = status::Ok;
     response.write_content_auto(
         MediaType {type_: ~"text",subtype: ~"html",parameters: ~[]}, 
@@ -31,6 +19,7 @@ fn index(request: &Request, response: &mut ResponseWriter) {
     );
 }
 
+#[allow(unused_must_use)]
 fn test_mustache(request: &Request, response: &mut ResponseWriter) {
     let mut context = HashMap::<~str, ~str>::new();
     context.insert(~"firstName", ~"Jim");
@@ -44,6 +33,7 @@ fn test_mustache(request: &Request, response: &mut ResponseWriter) {
     );
 }
 
+#[allow(unused_must_use)]
 fn test_variable(request: &Request, response: &mut ResponseWriter) {
     response.status = status::NotImplemented;
     response.write_content_auto(
@@ -52,11 +42,18 @@ fn test_variable(request: &Request, response: &mut ResponseWriter) {
     );
 }
 
-
 fn main() {
-    // TODO clean this up so its nicer
+
+    // TODO capture groups currently clash :S I need to rework that a bit
+    let routes: ~[RegexRoute] = ~[
+        Regex(Route{ method: "GET", path: "^/$", fptr: index}),
+        Regex(Route{ method: "GET", path: "^/test/?$", fptr: test_mustache}),
+        //Regex(Route{ method: "GET", path: "^/test/(?P<year>\\d{4})/?$", fptr: test_variable}),
+        Simple(Route{ method: "GET", path: "/simple/:var/", fptr: test_variable}),
+        //Simple(Route{ method: "GET", path: "/simple/:another/test-:stuff/", fptr: test_mustache}),
+    ];
+
     let router = ~RegexRouter::new(routes);
-    // TODO add defaults to Config
     let conf = Config {
         debug: true,
         bind_addr: from_str::<SocketAddr>("127.0.0.1:8001").unwrap(),

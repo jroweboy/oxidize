@@ -21,7 +21,6 @@ extern crate sync;
 pub use http::status;
 pub use request::Request;
 pub use conf::Config;
-// pub use route::Route;
 pub use http::server::ResponseWriter;
 pub use http::headers::content_type::MediaType;
 
@@ -31,7 +30,7 @@ use std::default::Default;
 
 use conf::Config;
 use route::Router;
-use sync::{Arc, RWArc};
+use sync::Arc;
 use std::cell::RefCell;
 
 pub mod route;
@@ -42,7 +41,6 @@ pub mod conf;
 #[deriving(Clone)]
 pub struct Oxidize {
     conf: Arc<Config>,
-    // routes : &'static [~Route<'static>:Send+Freeze],
     router: RefCell<~Router>,
     // TODO: Add these other fields
     // db : &'a DatabaseThingy,
@@ -51,18 +49,6 @@ pub struct Oxidize {
     // template_dir : Path, // should this be a part of Template?
     // add whatever other plugable things we wanna make
 }
-
-// impl Default for Oxidize {
-//     fn default() -> Oxidize {
-//         Oxidize {
-//             conf : Arc::new(Config {
-//                 debug: true,
-//                 bind_addr: from_str<SocketAddr>("127.0.0.1:8000").unwrap(),
-//             }),
-//             router : Arc::new(~RegexRouter
-//         }
-//     }
-// }
 
 impl Oxidize {
     pub fn new(conf: Config, router: ~Router) -> Oxidize {
@@ -106,21 +92,5 @@ impl Server for Oxidize {
         };
 
         self.router.with(|r: &~Router| {r.route(my_request, response);});
-
-        // self.//router.read(|router : &~Router| {
-        //     router.get().route(my_request, response);
-        // //});
-
-        // let router = self.conf.router;
-        // let response_body = router.route(my_request,res);
-
-        // res.headers.content_type = Some(headers::content_type::MediaType {
-        //     type_: ~"text",
-        //     subtype: ~"html",
-        //     parameters: ~[]
-        // });
-
-        // res.headers.content_length = Some(response_body.len());
-        // res.write(response_body.as_bytes());
     }
 }

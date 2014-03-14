@@ -1,8 +1,6 @@
 extern crate mustache;
 extern crate serialize;
 
-// use request::Request;
-
 use std::io::File;
 use std::str::{from_utf8, from_utf8_owned};
 use collections::hashmap::HashMap;
@@ -12,7 +10,7 @@ use collections::hashmap::HashMap;
 pub fn render<'a>(file_name: &'a str) -> ~str {
     // TODO: the templates dir probably shouldn't be hard coded
     let path = Path::new("templates/"+file_name);
-    println!("Render for this file: {}", path.display());
+    debug!("Render for this file: {}", path.display());
     let file_contents = File::open(&path).read_to_end().unwrap();
     // TODO: add the request to the context so that they can use things like session vars?
     from_utf8_owned(file_contents).expect("File could not be parsed as UTF8")
@@ -22,7 +20,7 @@ pub fn render<'a>(file_name: &'a str) -> ~str {
 pub fn mustache_render<'a>(file_name: &'a str, 
                     context: Option<&'a HashMap<~str,~str>>) -> ~str {
     let path = Path::new("templates/"+file_name);
-    println!("Render for this file: {}", path.display());
+    debug!("Render for this file: {}", path.display());
     let file_contents = File::open(&path).read_to_end().unwrap();
     // TODO: add the request to the context so that they can use things like session vars
     let contents = from_utf8(file_contents).expect("File could not be parsed as UTF8");

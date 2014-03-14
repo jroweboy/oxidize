@@ -12,7 +12,8 @@ example_hello_world=\
 oxidize_files=\
 			src/oxidize.rs\
 			src/renderer.rs\
-			src/route.rs\
+			src/route/mod.rs\
+			src/route/regexrouter.rs\
 			src/conf.rs
 
 OXIDIZE_LIB = build/liboxidize-a719aadf-0.0.so
@@ -66,8 +67,11 @@ examples: $(example_hello_world)
 run:
 	cd build/examples/hello_world && ./hello_world
 
+run-gdb:
+	cd build/examples/hello_world && gdb ./hello_world
+
 # Other stuff
-.PHONY: all clean examples run
+.PHONY: all clean examples run run-gdb
 
 clean:
 	rm -rf build lib
