@@ -6,7 +6,7 @@ use std::io::File;
 use request;
 use pcre;
 use http::status;
-use sync::RWArc;
+use sync::{RWArc, Arc};
 use route::Router;
 use request::Request;
 use http::server::ResponseWriter;
@@ -14,6 +14,7 @@ use http::server::ResponseWriter;
 
 pub struct RegexRouter<'a> {
     routes: RWArc<~[RegexRoute]>,
+    reverse_routes: Arc<HashMap<~str, ~str>>,
     compiled_routes: RWArc<Pcre>,
 }
 
@@ -50,25 +51,38 @@ impl<'a> Router for RegexRouter<'a> {
     }
 
     #[allow(unused_variable)]
-    fn reverse(&self, name: &str, vars: Option<HashMap<~str,~str>>) -> Option<&~str> {
-        None
+    fn reverse<'a>(&'a self, name: &str, vars: Option<HashMap<~str,~str>>) -> Option<&'a ~str> {
+        // TODO use the vars to replace regex things 
+        // TODO remove all the ugly regexy stuff to make a valid URL
+        self.reverse_routes.get().find_equiv(&name).and_then(
+            |path: &'a ~str| { Some(path) }
+        )
     }
 
     fn copy(&self) -> ~Router {
         ~RegexRouter {
             routes: self.routes.clone(),
             compiled_routes: self.compiled_routes.clone(),
+            reverse_routes: self.reverse_routes.clone(),
         } as ~Router
     }
 }
 
 impl<'a> RegexRouter<'a> {
     pub fn new(routes: ~[RegexRoute]) -> RegexRouter {
-        //let mut owned_routes = routes.clone();
+        let mut rev_map = HashMap::<~str,~str>::new();
+        for route in routes.iter() {
+            match *route {
+                Simple(r) => {rev_map.insert(r.name.to_owned(),r.convert_simple_regex().to_owned());},
+                Regex(r) => {rev_map.insert(r.name.to_owned(),r.path.to_owned());},
+                Static(_) => {debug!("TODO should Serve have a reverse?");}
+            };
+        }
         let pcre = RWArc::new(compile_routes(&routes));
         RegexRouter {
             routes: RWArc::new(routes),
             compiled_routes: pcre,
+            reverse_routes: Arc::new(rev_map),
         }
     }
 }
@@ -140,6 +154,7 @@ pub enum RegexRoute {
 pub struct Route {
     method: &'static str,
     path : &'static str,
+    name : &'static str,
     fptr : View,
 }
 

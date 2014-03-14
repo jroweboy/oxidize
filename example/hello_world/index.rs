@@ -25,6 +25,8 @@ fn test_mustache(request: &Request, response: &mut ResponseWriter) {
     context.insert(~"firstName", ~"Jim");
     context.insert(~"lastName", ~"Bob");
     context.insert(~"blogURL", ~"http://notarealurl.com :p");
+    context.insert(~"reverse_index", 
+        request.reverse("index", None).unwrap_or(&~"no such route").to_owned());
 
     response.status = status::Ok;
     response.write_content_auto(
@@ -43,13 +45,12 @@ fn test_variable(request: &Request, response: &mut ResponseWriter) {
 }
 
 fn main() {
-
     // TODO capture groups currently clash :S I need to rework that a bit
     let routes: ~[RegexRoute] = ~[
-        Regex(Route{ method: "GET", path: "^/$", fptr: index}),
-        Regex(Route{ method: "GET", path: "^/test/?$", fptr: test_mustache}),
+        Regex(Route{ method: "GET", name: "index", path: "^/$", fptr: index}),
+        Regex(Route{ method: "GET", name: "test_mustache", path: "^/test/?$", fptr: test_mustache}),
         //Regex(Route{ method: "GET", path: "^/test/(?P<year>\\d{4})/?$", fptr: test_variable}),
-        Simple(Route{ method: "GET", path: "/simple/:var/", fptr: test_variable}),
+        Simple(Route{ method: "GET", name: "test_variable", path: "/simple/:var/", fptr: test_variable}),
         //Simple(Route{ method: "GET", path: "/simple/:another/test-:stuff/", fptr: test_mustache}),
     ];
 

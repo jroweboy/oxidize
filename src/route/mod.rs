@@ -5,7 +5,7 @@ use collections::hashmap::HashMap;
 pub trait Router {
     // TODO: a router should have a way to call the middleware stack before and after the view
     fn route(&self, request: &mut Request, response: &mut ResponseWriter);
-    fn reverse(&self, name: &str, vars: Option<HashMap<~str,~str>>) -> Option<&~str>;
+    fn reverse<'a>(&'a self, name: &str, vars: Option<HashMap<~str,~str>>) -> Option<&'a ~str>;
     fn copy(&self) -> ~Router;
 }
 

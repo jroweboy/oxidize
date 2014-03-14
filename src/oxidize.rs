@@ -26,7 +26,6 @@ pub use http::headers::content_type::MediaType;
 
 use http::server::{Server, ResponseWriter}; 
 use http::server::request::{Star, AbsoluteUri, AbsolutePath, Authority};
-use std::default::Default;
 
 use conf::Config;
 use route::Router;
@@ -62,6 +61,7 @@ impl Oxidize {
         println!("Server is now running at {}", self.conf.get().bind_addr.to_str());
         self.serve_forever();
     }
+
 }
 
 impl Server for Oxidize {
@@ -88,7 +88,10 @@ impl Server for Oxidize {
         let my_request = &mut request::Request {
             method: test_method, 
             uri: path,
-            ..Default::default()
+            GET : None,
+            POST : None,
+            context : None,
+            router : self.router.borrow()
         };
 
         self.router.with(|r: &~Router| {r.route(my_request, response);});
