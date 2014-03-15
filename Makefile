@@ -4,7 +4,7 @@
 # but if anyone cares it would be nice to use cmake or something
 # Google/Github search for rust cmake, since I know they are out there somewhere
 LINKFLAGS ?= -L lib 
-RUSTFLAGS ?= -O --crate-type=dylib,rlib 
+RUSTFLAGS ?= --crate-type=dylib,rlib 
 
 example_hello_world=\
 			example/hello_world/index.rs
@@ -12,7 +12,9 @@ example_hello_world=\
 oxidize_files=\
 			src/oxidize.rs\
 			src/renderer.rs\
-			src/route.rs
+			src/route/mod.rs\
+			src/route/regexrouter.rs\
+			src/conf.rs
 
 OXIDIZE_LIB = build/liboxidize-a719aadf-0.0.so
 
@@ -65,8 +67,11 @@ examples: $(example_hello_world)
 run:
 	cd build/examples/hello_world && ./hello_world
 
+run-gdb:
+	cd build/examples/hello_world && gdb ./hello_world
+
 # Other stuff
-.PHONY: all clean examples run
+.PHONY: all clean examples run run-gdb
 
 clean:
 	rm -rf build lib
