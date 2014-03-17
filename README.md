@@ -1,4 +1,4 @@
-![logo](https://dl.dropboxusercontent.com/u/37773471/new_oxidize.png)
+![logo](https://raw.github.com/jroweboy/oxidize/master/oxidize_logo.png)
 
 A very basic web framework for Rust based off ideas from lots of other web frameworks.
 
