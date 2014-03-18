@@ -9,6 +9,9 @@ RUSTFLAGS ?= --crate-type=dylib,rlib
 example_hello_world=\
 			example/hello_world/index.rs
 
+benchmarks=\
+			benchmarks/hello_world/index.rs
+
 oxidize_files=\
 			src/oxidize.rs\
 			src/renderer.rs\
@@ -18,7 +21,7 @@ oxidize_files=\
 
 OXIDIZE_LIB = build/liboxidize-a719aadf-0.0.so
 
-all: oxidize examples
+all: oxidize examples benchmarks
 
 # ugly hack to get the libraries here and keep from having to recompile
 # them. I add a file with the name of the make rule. clean will clear this though
@@ -64,8 +67,18 @@ examples: $(example_hello_world)
 		build/examples/hello_world/hello_world $(example_hello_world)
 	cp -R example/hello_world/templates build/examples/hello_world/
 
+# Benchmark program for http://www.techempower.com/benchmarks/
+benchmarks: $(benchmarks)
+	mkdir -p build/benchmarks/hello_world/
+	rustc $(LINKFLAGS) -L build -o \
+		build/benchmarks/hello_world/hello_world $(benchmarks)
+	cp -R benchmarks/hello_world/templates build/benchmarks/hello_world/
+
 run:
 	cd build/examples/hello_world && ./hello_world
+
+run-benchmark:
+	cd build/benchmarks/hello_world && ./hello_world
 
 run-gdb:
 	cd build/examples/hello_world && gdb ./hello_world
