@@ -3,7 +3,9 @@
 # TODO: replace this with a much cooler build system. At least it works
 # but if anyone cares it would be nice to use cmake or something
 # Google/Github search for rust cmake, since I know they are out there somewhere
-LINKFLAGS ?= -L lib 
+LINKFLAGS ?= -L lib \
+	-L rust-postgres/submodules/rust-openssl/build \
+	-L rust-postgres/submodules/rust-phf/build
 RUSTFLAGS ?= --crate-type=dylib,rlib 
 
 example_hello_world=\
@@ -53,6 +55,14 @@ lib/pcre: rust-pcre/Makefile
 	cp rust-pcre/lib/libpcre*.rlib lib/
 	cp rust-pcre/lib/libpcre*.so lib/
 
+lib/postgres: rust-postgres/Makefile
+	cd rust-postgres && ./configure
+	$(MAKE) -C rust-postgres/
+	mkdir -p lib
+	touch lib/postgres
+	cp rust-postgres/build/libpostgres*.rlib lib/
+	cp rust-postgres/build/libpostgres*.so lib/
+
 # Main program
 oxidize: lib/mustache lib/http lib/pcre $(OXIDIZE_LIB)
 
@@ -68,7 +78,7 @@ examples: $(example_hello_world)
 	cp -R example/hello_world/templates build/examples/hello_world/
 
 # Benchmark program for http://www.techempower.com/benchmarks/
-benchmarks: $(benchmarks)
+benchmarks: lib/postgres $(benchmarks)
 	mkdir -p build/examples/benchmarks/
 	rustc $(LINKFLAGS) -L build -o \
 		build/examples/benchmarks/techempower $(benchmarks)
