@@ -58,7 +58,7 @@ impl Oxidize {
     }
 
     pub fn serve(self) {
-        println!("Server is now running at {}", self.conf.get().bind_addr.to_str());
+        debug!("Server is now running at {}", self.conf.get().bind_addr.to_str());
         self.serve_forever();
     }
 
