@@ -20,12 +20,10 @@ pub struct RegexRouter<'a> {
 
 impl<'a> Router for RegexRouter<'a> {
     fn route(&self, request: &mut request::Request, response: &mut ResponseWriter) {
-        // use the massive regex to route
+        // use the massive compiled regex to route
         let uri = request.uri.clone();
         let regex_result = self.compiled_routes.write(|re: &mut Pcre| {re.exec(uri)});
-        // Shortened the code by request. If this is not as easy to understand, you can
-        // look at the more verbose version that used to be here in git history
-        // Convert the get the mark on the match and change it to an uint 
+        // Get the mark on the match object and change it to an uint 
         // then find the route at that uint and call the fptr for it
         regex_result.and_then::<Option<uint>>(|rr: Match| {
             rr.mark.and_then(|m: ~str| {from_str::<uint>(m)}).and_then(|i: uint| {
