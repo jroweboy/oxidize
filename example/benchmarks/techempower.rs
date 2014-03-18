@@ -1,12 +1,18 @@
 extern crate oxidize;
 extern crate collections;
 extern crate serialize;
+extern crate postgres;
+extern crate extra;
 
 use oxidize::{Oxidize, Request, ResponseWriter, Config, MediaType};
 use oxidize::route::Router;
 use oxidize::route::regexrouter::{RegexRouter, RegexRoute, Route, Simple};
 use std::io::net::ip::SocketAddr;
 use serialize::{json, Encodable};
+
+use postgres::{PostgresConnection, PostgresStatement, NoSsl};
+use postgres::types::ToSql;
+
 
 
 fn main() {
@@ -20,6 +26,9 @@ fn main() {
         debug: true,
         bind_addr: from_str::<SocketAddr>("127.0.0.1:8001").unwrap(),
     };
+
+    //Database Connection Example
+    //let conn = PostgresConnection::connect("postgres://postgres@localhost", &NoSsl);
 
     let server = Oxidize::new(conf, router as ~Router);
     server.serve();
