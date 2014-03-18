@@ -45,10 +45,10 @@ fn test_variable(request: &Request, response: &mut ResponseWriter) {
 }
 
 fn main() {
-    // TODO capture groups currently clash :S I need to rework that a bit
+    // TODO: capture groups currently clash :S I need to rework that a bit
     let routes: ~[RegexRoute] = ~[
-        Regex(Route{ method: "GET", name: "index", path: "^/$", fptr: index}),
-        Regex(Route{ method: "GET", name: "test_mustache", path: "^/test/?$", fptr: test_mustache}),
+        Regex(Route{ method: "GET", name: "index", path: "/", fptr: index}),
+        Regex(Route{ method: "GET", name: "test_mustache", path: "/test/?", fptr: test_mustache}),
         //Regex(Route{ method: "GET", path: "^/test/(?P<year>\\d{4})/?$", fptr: test_variable}),
         Simple(Route{ method: "GET", name: "test_variable", path: "/simple/:var/", fptr: test_variable}),
         //Simple(Route{ method: "GET", path: "/simple/:another/test-:stuff/", fptr: test_mustache}),

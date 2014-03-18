@@ -1,6 +1,6 @@
 use collections::hashmap::HashMap;
 use collections::enum_set::{EnumSet};
-use pcre::{CompileOption, StudyOption, ExtraOption, Pcre};
+use pcre::{CompileOption, StudyOption, ExtraOption, Pcre, Match};
 use http::headers::content_type::MediaType;
 use std::io::File;
 use request;
@@ -20,40 +20,29 @@ pub struct RegexRouter<'a> {
 
 impl<'a> Router for RegexRouter<'a> {
     fn route(&self, request: &mut request::Request, response: &mut ResponseWriter) {
-        // use the massive regex to route
+        // use the massive compiled regex to route
         let uri = request.uri.clone();
         let regex_result = self.compiled_routes.write(|re: &mut Pcre| {re.exec(uri)});
-
-        match regex_result {
-            None => None,
-            Some(pcre_match) => {
-                // get the mark to find the index of the route in the routes
-                let mark = pcre_match.mark;
-                // convert the mark to an int and call the appropriate function
-                let index = match mark {
-                    Some(m) => from_str::<uint>(m),
-                    None() => None,
-                };
-                match index {
-                    Some(i) => {
-                        self.routes.read( |x: &~[RegexRoute]| { 
-                            match x[i] {
-                                Simple(s) => {(s.fptr)(request, response); Some("success")},
-                                Regex(s) => {(s.fptr)(request, response); Some("success")},
-                                Static(_) => {debug!("TODO: impl StaticServe"); None},
-                            }
-                        }
-                    )}
-                    None => None
-                }
-            }
-        };
+        // Get the mark on the match object and change it to an uint 
+        // then find the route at that uint and call the fptr for it
+        regex_result.and_then::<Option<uint>>(|rr: Match| {
+            rr.mark.and_then(|m: ~str| {from_str::<uint>(m)}).and_then(|i: uint| {
+                self.routes.read(|x: &~[RegexRoute]| { 
+                    match x[i] {
+                        Simple(s) => {(s.fptr)(request, response);},
+                        Regex(s) => {(s.fptr)(request, response);},
+                        Static(_) => {debug!("TODO: impl StaticServe");},
+                    };
+                    None
+                })
+            })
+        });
     }
 
     #[allow(unused_variable)]
     fn reverse<'a>(&'a self, name: &str, vars: Option<HashMap<~str,~str>>) -> Option<&'a ~str> {
-        // TODO use the vars to replace regex things 
-        // TODO remove all the ugly regexy stuff to make a valid URL
+        // TODO: use the vars to replace regex things 
+        // TODO: remove all the ugly regexy stuff to make a valid URL
         self.reverse_routes.get().find_equiv(&name).and_then(
             |path: &'a ~str| { Some(path) }
         )
@@ -75,7 +64,7 @@ impl<'a> RegexRouter<'a> {
             match *route {
                 Simple(r) => {rev_map.insert(r.name.to_owned(),r.convert_simple_regex().to_owned());},
                 Regex(r) => {rev_map.insert(r.name.to_owned(),r.path.to_owned());},
-                Static(_) => {debug!("TODO should Serve have a reverse?");}
+                Static(_) => {debug!("TODO: should Serve have a reverse?");}
             };
         }
         let pcre = RWArc::new(compile_routes(&routes));
@@ -103,16 +92,22 @@ fn compile_routes(routes : &~[RegexRoute]) -> Pcre {
         }
 
         regex.push_str("|");
-        // TODO add the method to the regex
+        // TODO: add the method to the regex
         //regex.push_str(route.method.to_owned());
-        // debug!("About to unwrap {}", route_regex);
-        regex.push_str(route_regex.unwrap().to_owned());
+        let rr = route_regex.unwrap().to_owned();
+        if !rr.starts_with("^") {
+            regex.push_char('^');
+        }
+        regex.push_str(rr);
+        if !rr.ends_with("$") {
+            regex.push_char('$');
+        }
         regex.push_str("(*MARK:");
         regex.push_str(i.to_str());
-        regex.push_str(")");
+        regex.push_char(')');
         i += 1;
     }
-    regex.push_str(")");
+    regex.push_char(')');
 
     debug!("routing regex: {}", regex);
 
@@ -140,8 +135,6 @@ fn compile_routes(routes : &~[RegexRoute]) -> Pcre {
     compiled_routes
 }
 
-
-
 pub type View = fn (&Request, &mut ResponseWriter);
 
 pub enum RegexRoute {
@@ -165,7 +158,7 @@ pub struct Serve {
 }
 
 
-// TODO make a way to import routes from another app
+// TODO: make a way to import routes from another app
 // IDEA maybe make a way to package a library version of your app
 // and then they can import from your library and construct your library and 
 // call things from it and stuff. I'll look into that.
@@ -221,7 +214,7 @@ impl Route {
         let mut state = NORMAL;
         for c in self.path.chars() {
             // a very cruddy finite state machine
-            // TODO escape any regex special characters
+            // TODO: escape any regex special characters
             if c == ':' && state == NORMAL {
                 state = VARIABLE;
                 regex.push_str("(?P<");
@@ -239,15 +232,14 @@ impl Route {
             regex.push_str(">.+)/");
         }
         // make the trailing / optional
-        debug!("regex : {} char at reverse 0 : {}", regex, regex.char_at(regex.len() - 1));
         if regex.char_at(regex.len() - 1) == '/' {
             regex.push_char('?');
         } else {
             regex.push_str("/?");
         }
-        //TODO (with all routes) fix the GET params situation for routing
+        //TODO: (with all routes) fix the GET params situation for routing
         // aka /test/?blah=blah does not route currently
-        regex.push_str("$");
+        regex.push_char('$');
         regex
     }
 }
