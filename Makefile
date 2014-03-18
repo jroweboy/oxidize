@@ -10,7 +10,7 @@ example_hello_world=\
 			example/hello_world/index.rs
 
 benchmarks=\
-			benchmarks/hello_world/index.rs
+			benchmarks/techempower/techempower.rs
 
 oxidize_files=\
 			src/oxidize.rs\
@@ -69,16 +69,15 @@ examples: $(example_hello_world)
 
 # Benchmark program for http://www.techempower.com/benchmarks/
 benchmarks: $(benchmarks)
-	mkdir -p build/benchmarks/hello_world/
+	mkdir -p build/benchmarks/techempower/
 	rustc $(LINKFLAGS) -L build -o \
-		build/benchmarks/hello_world/hello_world $(benchmarks)
-	cp -R benchmarks/hello_world/templates build/benchmarks/hello_world/
+		build/benchmarks/techempower/techempower $(benchmarks)
 
 run:
 	cd build/examples/hello_world && ./hello_world
 
 run-benchmark:
-	cd build/benchmarks/hello_world && ./hello_world
+	cd build/benchmarks/techempower && ./techempower
 
 run-gdb:
 	cd build/examples/hello_world && gdb ./hello_world
