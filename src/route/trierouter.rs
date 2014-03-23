@@ -16,6 +16,7 @@ pub struct TrieRouter<'a> {
 
 impl<'a> Router for TrieRouter<'a> {
     fn route(&self, request: &mut request::Request, response: &mut ResponseWriter) {
+        debug!("{}",request.uri);
         let (handler,vars) = self.get_handler(request.uri);
         match handler {
             Some(fptr) => (fptr)(request, response, &vars),
