@@ -26,7 +26,7 @@ fn test_mustache(request: &Request, response: &mut ResponseWriter, vars: &~[(~st
     context.insert(~"lastName", ~"Bob");
     context.insert(~"blogURL", ~"http://notarealurl.com :p");
     context.insert(~"reverse_index", 
-        request.reverse("index", None).unwrap_or(&~"no such route").to_owned());
+        request.reverse("index", None).unwrap_or(~"no such route").to_owned());
 
     response.status = status::Ok;
     response.write_content_auto(
@@ -38,13 +38,15 @@ fn test_mustache(request: &Request, response: &mut ResponseWriter, vars: &~[(~st
 #[allow(unused_must_use)]
 fn test_variable(request: &Request, response: &mut ResponseWriter, vars: &~[(~str,~str)]) {
     let mut context = HashMap::<~str, ~str>::new();
-    let the_vars = vars.to_owned();
 
-    for var in the_vars.iter() {
-        let (key,value) = var;
+    // the clone is required for some reason...
+    for var in vars.iter() {
+        let t = var.clone();
+        let (k,v) = t;
+        context.insert(k,v);
     }
-    /*context.insert(~"reverse",
-        request.reverse("test_variable", None).unwrap_or(&~"no such route").to_owned());*/
+    context.insert(~"reverse",
+        request.reverse("test_variable", Some(vars.to_owned())).unwrap_or(~"no such route").to_owned());
 
     response.status = status::Ok;
     response.write_content_auto(
@@ -56,7 +58,7 @@ fn test_variable(request: &Request, response: &mut ResponseWriter, vars: &~[(~st
 fn main() {
     let routes: ~[TrieRoute] = ~[
         Simple(Route{ method: "GET", name: "index", path: "/", fptr: index}),
-        Simple(Route{ method: "GET", name: "test_mustache", path: "/test/?", fptr: test_mustache}),
+        Simple(Route{ method: "GET", name: "test_mustache", path: "/test", fptr: test_mustache}),
         Variable(Route{ method: "GET", name: "test_variable", path: "/users/user-:userid/post-:postid", fptr: test_variable}),
     ];
 

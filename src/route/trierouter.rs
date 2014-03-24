@@ -16,7 +16,6 @@ pub struct TrieRouter<'a> {
 
 impl<'a> Router for TrieRouter<'a> {
     fn route(&self, request: &mut request::Request, response: &mut ResponseWriter) {
-        debug!("{}",request.uri);
         let (handler,vars) = self.get_handler(request.uri);
         match handler {
             Some(fptr) => (fptr)(request, response, &vars),
@@ -24,11 +23,31 @@ impl<'a> Router for TrieRouter<'a> {
         }
     }
     #[allow(unused_variable)]
-    fn reverse<'a>(&'a self, name: &str, vars: Option<~[(~str,~str)]>) -> Option<&'a ~str> {
-        // TODO: use the vars to replace 
-        self.reverse_routes.get().find_equiv(&name).and_then(
-            |path: &'a ~str| { Some(path) }
-        )
+    fn reverse<'a>(&'a self, name: &str, vars: Option<~[(~str,~str)]>) -> Option<~str> {
+        // TODO: use the vars to replace
+        match vars {
+            Some(list) => self.reverse_routes.get().find_equiv(&name).and_then(
+                |path: &'a ~str| {
+                    let mut original_path = path.clone();
+                    let mut new_path: ~str;
+                    for var in list.iter() {
+                        let t = var.clone();
+                        let (mut k,v) = t;
+                        k.unshift_char(':');
+                        println!("{} {}",k,v);
+                        new_path = original_path.replace(k,v);
+                        original_path = new_path.clone();
+                    }
+                    Some(original_path)
+                }
+            ),
+            None => self.reverse_routes.get().find_equiv(&name).and_then(
+                |path: &'a ~str| {
+                    Some(path.to_owned())
+                }
+            )
+        }
+        
     }
 
     fn copy(&self) -> ~Router {
@@ -66,7 +85,7 @@ impl<'a> TrieRouter<'a> {
         let mut current_var = ~"";
         let mut current_key = ~"";
         let mut building_var = false;
-        // let mut not_found = false;
+        let mut not_found = false;
         let mut vars = ~[];
 
         for ch in path.chars() {
@@ -77,7 +96,7 @@ impl<'a> TrieRouter<'a> {
                     current_node = current_node.children.get(&ch);
                 }
                 else {
-                    // not_found = true;
+                    not_found = true;
                     break;
                 }
             }
@@ -97,11 +116,21 @@ impl<'a> TrieRouter<'a> {
                 current_node = current_node.children.get(&ch);
             }
             else {
-                // not_found = true;
+                not_found = true;
                 break;
             }
         }
-        (current_node.fptr, vars)
+        if building_var {
+            vars.push((current_key.clone(),current_var.clone()));
+        }
+
+        if not_found {
+            (None, vars)
+        }
+        else {
+            (current_node.fptr, vars)
+        }
+        
     }
 }
 
@@ -189,10 +218,10 @@ impl TrieNode {
                     if current_var.len() == 0 {
                         // error: can't allow empty string as varname
                     }
-                    ptr.varname = Some(current_var.clone());
                     let tmp = ptr;
-                    tmp.children.find_or_insert('*', TrieNode::setup());
-                    ptr = tmp.children.find_or_insert(ch, TrieNode::setup());
+                    let tmp2 = tmp.children.find_or_insert('*', TrieNode::setup());
+                    tmp2.varname = Some(current_var.clone());
+                    ptr = tmp2.children.find_or_insert(ch, TrieNode::setup());
                     building_var = false;
                 }
                 else if building_var {
@@ -207,11 +236,13 @@ impl TrieNode {
                     ptr = tmp.children.find_or_insert(ch, TrieNode::setup());
                 }
             }
-            ptr.fptr = Some(route.fptr);
-
             if building_var {
-                ptr.varname = Some(current_var);
+                let tmp = ptr;
+                let tmp2 = tmp.children.find_or_insert('*', TrieNode::setup());
+                tmp2.varname = Some(current_var);
+                ptr = tmp2;
             }
+            ptr.fptr = Some(route.fptr);
         }
     }
 }
