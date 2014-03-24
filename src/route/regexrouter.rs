@@ -40,11 +40,11 @@ impl<'a> Router for RegexRouter<'a> {
     }
 
     #[allow(unused_variable)]
-    fn reverse<'a>(&'a self, name: &str, vars: Option<~[(~str,~str)]>) -> Option<&'a ~str> {
+    fn reverse<'a>(&'a self, name: &str, vars: Option<~[(~str,~str)]>) -> Option<~str> {
         // TODO: use the vars to replace regex things 
         // TODO: remove all the ugly regexy stuff to make a valid URL
         self.reverse_routes.get().find_equiv(&name).and_then(
-            |path: &'a ~str| { Some(path) }
+            |path: &'a ~str| { Some(path.to_owned()) }
         )
     }
 
