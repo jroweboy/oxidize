@@ -17,6 +17,7 @@ oxidize_files=\
 			src/renderer.rs\
 			src/route/mod.rs\
 			src/route/regexrouter.rs\
+			src/route/trierouter.rs\
 			src/conf.rs
 
 OXIDIZE_LIB = build/liboxidize-a719aadf-0.0.so
