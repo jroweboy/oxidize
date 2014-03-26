@@ -14,7 +14,7 @@ use postgres::{PostgresConnection, PostgresStatement, NoSsl};
 use postgres::types::ToSql;
 
 // Database
-static connectionString:    &'static str = "benchmarkdbuser:benchmarkdbpass@tcp(localhost:3306)/hello_world";
+static connectionString:    &'static str = "postgres://benchmarkdbuser:benchmarkdbpass@localhost/hello_world";
 static worldSelect:         &'static str = "SELECT id, randomNumber FROM World WHERE id = ?";
 static worldUpdate:         &'static str = "UPDATE World SET randomNumber = ? WHERE id = ?";
 static fortuneSelect:       &'static str = "SELECT id, message FROM Fortune;";
