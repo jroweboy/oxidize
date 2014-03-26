@@ -10009,7 +10009,7 @@ INSERT into World (id, randomNumber) VALUES
 (9997,1839),
 (9998,-7347),
 (9999,-5696),
-(10000,7649)
+(10000,7649);
 
 
 
@@ -10121,4 +10121,4 @@ Sorry, I will use [OFFTOPIC] for facts in future ;-)
 \"Talk is cheap.  Show me the code.\"
 
 	- Linus Torvalds
-')
+');
