@@ -13,11 +13,21 @@ use serialize::{json, Encodable};
 use postgres::{PostgresConnection, PostgresStatement, NoSsl};
 use postgres::types::ToSql;
 
-
+// Database
+static connectionString:    &'static str = "benchmarkdbuser:benchmarkdbpass@tcp(localhost:3306)/hello_world";
+static worldSelect:         &'static str = "SELECT id, randomNumber FROM World WHERE id = ?";
+static worldUpdate:         &'static str = "UPDATE World SET randomNumber = ? WHERE id = ?";
+static fortuneSelect:       &'static str = "SELECT id, message FROM Fortune;";
+static worldRowCount:       int = 10000;
+static maxConnectionCount:  int = 256;
 
 fn main() {
     let routes: ~[RegexRoute] = ~[
-        Simple(Route{ method: "GET", name: "json", path: "/json", fptr: json_handler}),
+        Simple(Route{ method: "GET", name: "json",      path: "/json",      fptr: json_handler}),
+        Simple(Route{ method: "GET", name: "db",        path: "/db",        fptr: single_query_handler}),
+        Simple(Route{ method: "GET", name: "queries",   path: "/queries",   fptr: multiple_queries_handler}),
+        Simple(Route{ method: "GET", name: "fortunes",  path: "/fortunes",  fptr: fortunes_handler}),
+        Simple(Route{ method: "GET", name: "updates",   path: "/updates",   fptr: updates_handler}),
         Simple(Route{ method: "GET", name: "plaintext", path: "/plaintext", fptr: plaintext_handler}),
     ];
 
@@ -28,12 +38,23 @@ fn main() {
     };
 
     //Database Connection Example
-    //let conn = PostgresConnection::connect("postgres://postgres@localhost", &NoSsl);
+    let conn = PostgresConnection::connect(connectionString, &NoSsl);
 
     let server = Oxidize::new(conf, router as ~Router);
     server.serve();
 }
 
+#[deriving(Encodable)]
+pub struct JSONWorld {
+    id: &'static int,
+    random_number: &'static int
+}
+
+#[deriving(Encodable)]
+pub struct JSONFortune {
+    id: &'static int,
+    message: &'static str
+}
 
 #[deriving(Encodable)]
 pub struct JSONMessage   {
@@ -53,6 +74,27 @@ fn json_handler(request: &Request, response: &mut ResponseWriter) {
         json::Encoder::str_encode(&message)
     );
 }
+
+#[allow(unused_must_use)]
+fn single_query_handler(request: &Request, response: &mut ResponseWriter) {
+
+}
+
+#[allow(unused_must_use)]
+fn multiple_queries_handler(request: &Request, response: &mut ResponseWriter) {
+
+}
+
+#[allow(unused_must_use)]
+fn fortunes_handler(request: &Request, response: &mut ResponseWriter) {
+
+}
+
+#[allow(unused_must_use)]
+fn updates_handler(request: &Request, response: &mut ResponseWriter) {
+
+}
+
 
 #[allow(unused_must_use)]
 fn plaintext_handler(request: &Request, response: &mut ResponseWriter) {
