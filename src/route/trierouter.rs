@@ -1,4 +1,5 @@
 use collections::hashmap::HashMap;
+use collections::smallintmap::SmallIntMap;
 use request;
 use sync::Arc;
 use route::Router;
@@ -90,8 +91,8 @@ impl<'a> TrieRouter<'a> {
             if building_var && ch == '/' {
                 vars.push((current_key.clone(),current_var.clone()));
                 building_var = false;
-                if current_node.children.contains_key(&ch) {
-                    current_node = current_node.children.get(&ch);
+                if current_node.children.contains_key(&(ch as uint)) {
+                    current_node = current_node.children.get(&(ch as uint));
                 }
                 else {
                     not_found = true;
@@ -101,8 +102,8 @@ impl<'a> TrieRouter<'a> {
             else if building_var {
                 current_var.push_char(ch);
             }
-            else if current_node.children.contains_key(&'*') {
-                current_node = current_node.children.get(&'*');
+            else if current_node.children.contains_key(&('*' as uint)) {
+                current_node = current_node.children.get(&('*' as uint));
                 // cloning here because it tried to move varname but the current_node 
                 // is only a non mutable pointer here so it can't move.
                 current_key = current_node.varname.clone().unwrap_or(~"");
@@ -110,8 +111,8 @@ impl<'a> TrieRouter<'a> {
                 current_var.push_char(ch);
                 building_var = true;
             }
-            else if current_node.children.contains_key(&ch) {
-                current_node = current_node.children.get(&ch);
+            else if current_node.children.contains_key(&(ch as uint)) {
+                current_node = current_node.children.get(&(ch as uint));
             }
             else {
                 not_found = true;
@@ -156,7 +157,7 @@ pub struct Route {
 }
 
 struct TrieRouterNode {
-    children: HashMap<char, TrieRouterNode>,
+    children: SmallIntMap<TrieRouterNode>,
     fptr: Option<View>,
     varname: Option<~str>,
 }
@@ -164,7 +165,7 @@ struct TrieRouterNode {
 impl TrieRouterNode {
     pub fn new() -> TrieRouterNode {
         TrieRouterNode {
-            children : HashMap::new(),
+            children : SmallIntMap::new(),
             fptr: None,
             varname: None,
         }
@@ -188,7 +189,7 @@ impl TrieRouterNode {
             let mut ptr = self;
             for ch in path.chars() {
                 let tmp = ptr;
-                ptr = tmp.children.find_or_insert(ch, TrieRouterNode::new());
+                ptr = tmp.children.find_or_insert(ch, &TrieRouterNode::new());
             }
             ptr.fptr = Some(route.fptr);
         }
@@ -216,9 +217,9 @@ impl TrieRouterNode {
                         // error: can't allow empty string as varname
                     }
                     let tmp = ptr;
-                    let tmp2 = tmp.children.find_or_insert('*', TrieRouterNode::new());
+                    let tmp2 = tmp.children.find_or_insert('*', &TrieRouterNode::new());
                     tmp2.varname = Some(current_var.clone());
-                    ptr = tmp2.children.find_or_insert(ch, TrieRouterNode::new());
+                    ptr = tmp2.children.find_or_insert(ch, &TrieRouterNode::new());
                     building_var = false;
                 }
                 else if building_var {
@@ -230,16 +231,34 @@ impl TrieRouterNode {
                 }
                 else {
                     let tmp = ptr;
-                    ptr = tmp.children.find_or_insert(ch, TrieRouterNode::new());
+                    ptr = tmp.children.find_or_insert(ch, &TrieRouterNode::new());
                 }
             }
             if building_var {
                 let tmp = ptr;
-                let tmp2 = tmp.children.find_or_insert('*', TrieRouterNode::new());
+                let tmp2 = tmp.children.find_or_insert('*', &TrieRouterNode::new());
                 tmp2.varname = Some(current_var);
                 ptr = tmp2;
             }
             ptr.fptr = Some(route.fptr);
         }
+    }
+}
+
+pub trait FindOrInsert {
+    fn find_or_insert(&self, ch: char, node: &mut TrieRouterNode ) -> &mut TrieRouterNode;
+}
+
+impl FindOrInsert for SmallIntMap<TrieRouterNode> {
+    fn find_or_insert(&self, ch: char, node: &mut TrieRouterNode) -> &mut TrieRouterNode {
+        let mut result = node;
+        if self.contains_key(&(ch as uint)) {
+            result = self.find_mut(&(ch as uint)).unwrap();
+        }
+        else {
+            self.insert(ch as uint, node.clone());
+            result = self.find_mut(&(ch as uint)).unwrap();
+        }
+        result
     }
 }
