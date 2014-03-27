@@ -25,7 +25,7 @@ static worldRowCount:       i64 = 10000;
 static maxConnectionCount:  int = 256;
 static connectionPoolCount: uint = 5;
 
-static mut connectionPoolOption: Option<*()> = None;
+static mut connectionPoolOption: Option<*PostgresConnectionPool> = None;
 
 fn main() {
     let routes: ~[RegexRoute] = ~[
@@ -44,7 +44,6 @@ fn main() {
     };
 
     //Database Connection Pool
-    let conn = PostgresConnection::connect(connectionString, &NoSsl);
     let pool = PostgresConnectionPool::new(connectionString, NoSsl, connectionPoolCount);
     unsafe {
         connectionPoolOption = Some(cast::transmute(&pool));
