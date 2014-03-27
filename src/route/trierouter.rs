@@ -10,7 +10,7 @@ use http::server::ResponseWriter;
 pub type View = fn (&Request, &mut ResponseWriter, &~[(~str,~str)]);
 
 pub struct TrieRouter<'a> {
-    trie: Arc<TrieNode>,
+    trie: Arc<TrieRouterNode>,
     reverse_routes: Arc<HashMap<~str, ~str>>
 }
 
@@ -24,7 +24,6 @@ impl<'a> Router for TrieRouter<'a> {
     }
     #[allow(unused_variable)]
     fn reverse<'a>(&'a self, name: &str, vars: Option<~[(~str,~str)]>) -> Option<~str> {
-        // TODO: use the vars to replace
         match vars {
             Some(list) => self.reverse_routes.find_equiv(&name).and_then(
                 |path: &'a ~str| {
@@ -34,7 +33,6 @@ impl<'a> Router for TrieRouter<'a> {
                         let t = var.clone();
                         let (mut k,v) = t;
                         k.unshift_char(':');
-                        println!("{} {}",k,v);
                         new_path = original_path.replace(k,v);
                         original_path = new_path.clone();
                     }
@@ -67,7 +65,7 @@ impl<'a> TrieRouter<'a> {
                 Variable(r) => {reverse_routes.insert(r.name.to_owned(),r.path.to_owned());}
             }
         }
-        let trie = TrieNode::new(&routes);
+        let trie = TrieRouter::build_routing_trie(&routes);
         TrieRouter {
             trie: Arc::new(trie),
             reverse_routes: Arc::new(reverse_routes)
@@ -130,7 +128,18 @@ impl<'a> TrieRouter<'a> {
         else {
             (current_node.fptr, vars)
         }
-        
+    }
+
+    fn build_routing_trie(routes : &~[TrieRoute]) -> TrieRouterNode {
+        let mut root = TrieRouterNode::new();
+
+        for route in routes.iter() {
+            match *route {
+                Simple(r) => {root.add(r);},
+                Variable(r) => {root.add_variable(r);},
+            }
+        }
+        root
     }
 }
 
@@ -146,27 +155,15 @@ pub struct Route {
     pub fptr : View,
 }
 
-struct TrieNode {
-    children: HashMap<char, TrieNode>,
+struct TrieRouterNode {
+    children: HashMap<char, TrieRouterNode>,
     fptr: Option<View>,
     varname: Option<~str>,
 }
 
-impl TrieNode {
-    pub fn new(routes : &~[TrieRoute]) -> TrieNode {
-        let mut root = TrieNode::setup();
-
-        for route in routes.iter() {
-            match *route {
-                Simple(r) => {root.add(r);},
-                Variable(r) => {root.add_variable(r);},
-            }
-        }
-        root
-    }
-
-    fn setup() -> TrieNode {
-        TrieNode {
+impl TrieRouterNode {
+    pub fn new() -> TrieRouterNode {
+        TrieRouterNode {
             children : HashMap::new(),
             fptr: None,
             varname: None,
@@ -191,7 +188,7 @@ impl TrieNode {
             let mut ptr = self;
             for ch in path.chars() {
                 let tmp = ptr;
-                ptr = tmp.children.find_or_insert(ch, TrieNode::setup());
+                ptr = tmp.children.find_or_insert(ch, TrieRouterNode::new());
             }
             ptr.fptr = Some(route.fptr);
         }
@@ -219,9 +216,9 @@ impl TrieNode {
                         // error: can't allow empty string as varname
                     }
                     let tmp = ptr;
-                    let tmp2 = tmp.children.find_or_insert('*', TrieNode::setup());
+                    let tmp2 = tmp.children.find_or_insert('*', TrieRouterNode::new());
                     tmp2.varname = Some(current_var.clone());
-                    ptr = tmp2.children.find_or_insert(ch, TrieNode::setup());
+                    ptr = tmp2.children.find_or_insert(ch, TrieRouterNode::new());
                     building_var = false;
                 }
                 else if building_var {
@@ -233,12 +230,12 @@ impl TrieNode {
                 }
                 else {
                     let tmp = ptr;
-                    ptr = tmp.children.find_or_insert(ch, TrieNode::setup());
+                    ptr = tmp.children.find_or_insert(ch, TrieRouterNode::new());
                 }
             }
             if building_var {
                 let tmp = ptr;
-                let tmp2 = tmp.children.find_or_insert('*', TrieNode::setup());
+                let tmp2 = tmp.children.find_or_insert('*', TrieRouterNode::new());
                 tmp2.varname = Some(current_var);
                 ptr = tmp2;
             }
