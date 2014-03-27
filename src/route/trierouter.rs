@@ -1,5 +1,6 @@
 use collections::hashmap::HashMap;
 use collections::smallintmap::SmallIntMap;
+use std::clone::Clone;
 use request;
 use sync::Arc;
 use route::Router;
@@ -7,6 +8,14 @@ use request::Request;
 use http::server::ResponseWriter;
 
 //TODO: ensure routes are valid URLs
+// allowed url characters: $-_.+!*'(),
+// reserved characters: $&+,/:;=?@
+// % is used for escaped characters
+// # is used for anchors
+// ~ is often used in urls even though it is "unsafe"
+// what should be the character used to represent a variable in the built tree?
+// maybe ^
+// what should be the character to act as a delimeter for variable when defining a route
 
 pub type View = fn (&Request, &mut ResponseWriter, &~[(~str,~str)]);
 
@@ -102,17 +111,21 @@ impl<'a> TrieRouter<'a> {
             else if building_var {
                 current_var.push_char(ch);
             }
-            else if current_node.children.contains_key(&('*' as uint)) {
-                current_node = current_node.children.get(&('*' as uint));
+            // putting this else block before the next one allows routes to "clash"
+            // e.g. route1: "/blog/post:id"
+            // e.g. route1: "/blog/posts"
+            // could both exist but "s" would never be the "id"
+            else if current_node.children.contains_key(&(ch as uint)) {
+                current_node = current_node.children.get(&(ch as uint));
+            }
+            else if current_node.children.contains_key(&('^' as uint)) {
+                current_node = current_node.children.get(&('^' as uint));
                 // cloning here because it tried to move varname but the current_node 
                 // is only a non mutable pointer here so it can't move.
                 current_key = current_node.varname.clone().unwrap_or(~"");
                 current_var.truncate(0);
                 current_var.push_char(ch);
                 building_var = true;
-            }
-            else if current_node.children.contains_key(&(ch as uint)) {
-                current_node = current_node.children.get(&(ch as uint));
             }
             else {
                 not_found = true;
@@ -172,10 +185,6 @@ impl TrieRouterNode {
     }
 
     fn add(&mut self, route: Route) {
-        // let mut current_node = self;
-        // let mut current_char: char;
-        // let mut current_var: ~str;
-        // let mut building_var = false;
         let path = route.path;
 
         if path[0] != '/' as u8 {
@@ -189,15 +198,13 @@ impl TrieRouterNode {
             let mut ptr = self;
             for ch in path.chars() {
                 let tmp = ptr;
-                ptr = tmp.children.find_or_insert(ch, &TrieRouterNode::new());
+                ptr = &mut tmp.children.find_or_insert(ch, &TrieRouterNode::new());
             }
             ptr.fptr = Some(route.fptr);
         }
     }
 
     fn add_variable(&mut self, route: Route) {
-        // let mut current_node = self;
-        // let mut current_char: char;
         let mut current_var = ~"";
         let mut building_var = false;
         let path = route.path;
@@ -217,9 +224,9 @@ impl TrieRouterNode {
                         // error: can't allow empty string as varname
                     }
                     let tmp = ptr;
-                    let tmp2 = tmp.children.find_or_insert('*', &TrieRouterNode::new());
+                    let tmp2 = &mut tmp.children.find_or_insert('^', &TrieRouterNode::new());
                     tmp2.varname = Some(current_var.clone());
-                    ptr = tmp2.children.find_or_insert(ch, &TrieRouterNode::new());
+                    ptr = &mut tmp2.children.find_or_insert(ch, &TrieRouterNode::new());
                     building_var = false;
                 }
                 else if building_var {
@@ -231,12 +238,12 @@ impl TrieRouterNode {
                 }
                 else {
                     let tmp = ptr;
-                    ptr = tmp.children.find_or_insert(ch, &TrieRouterNode::new());
+                    ptr = &mut tmp.children.find_or_insert(ch, &TrieRouterNode::new());
                 }
             }
             if building_var {
                 let tmp = ptr;
-                let tmp2 = tmp.children.find_or_insert('*', &TrieRouterNode::new());
+                let tmp2 = &mut tmp.children.find_or_insert('^', &TrieRouterNode::new());
                 tmp2.varname = Some(current_var);
                 ptr = tmp2;
             }
@@ -245,12 +252,27 @@ impl TrieRouterNode {
     }
 }
 
+impl Clone for TrieRouterNode {
+    fn clone(&self) -> TrieRouterNode {
+        let mut children: SmallIntMap<TrieRouterNode>;
+        for (k,v) in self.children.iter() {
+            children.insert(k,v.clone());
+        }
+
+        TrieRouterNode {
+            children: children,
+            fptr: self.fptr,
+            varname: self.varname.clone()   
+        }
+    }
+}
+
 pub trait FindOrInsert {
-    fn find_or_insert(&self, ch: char, node: &mut TrieRouterNode ) -> &mut TrieRouterNode;
+    fn find_or_insert(&self, ch: char, node: &mut TrieRouterNode ) -> TrieRouterNode;
 }
 
 impl FindOrInsert for SmallIntMap<TrieRouterNode> {
-    fn find_or_insert(&self, ch: char, node: &mut TrieRouterNode) -> &mut TrieRouterNode {
+    fn find_or_insert(&self, ch: char, node: &mut TrieRouterNode) -> TrieRouterNode {
         let mut result = node;
         if self.contains_key(&(ch as uint)) {
             result = self.find_mut(&(ch as uint)).unwrap();
@@ -259,6 +281,6 @@ impl FindOrInsert for SmallIntMap<TrieRouterNode> {
             self.insert(ch as uint, node.clone());
             result = self.find_mut(&(ch as uint)).unwrap();
         }
-        result
+        result.clone()
     }
 }
