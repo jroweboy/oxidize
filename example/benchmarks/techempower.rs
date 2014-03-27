@@ -79,7 +79,7 @@ static message : JSONMessage = JSONMessage{message:"Hello, World!"};
 #[allow(unused_must_use)]
 fn json_handler(request: &Request, response: &mut ResponseWriter) {
     response.write_content_auto(
-        MediaType {type_: ~"application",subtype: ~"javascript",parameters: ~[]}, 
+        MediaType {type_: ~"application",subtype: ~"json",parameters: ~[]}, 
         json::Encoder::str_encode(&message)
     );
 }
