@@ -19,11 +19,10 @@ use postgres::types::ToSql;
 // Database
 static connectionString:    &'static str = "postgres://benchmarkdbuser:benchmarkdbpass@localhost/hello_world";
 static worldSelect:         &'static str = "SELECT id, randomNumber FROM World WHERE id = $1";
-static worldUpdate:         &'static str = "UPDATE World SET randomNumber = ? WHERE id = ?";
+static worldUpdate:         &'static str = "UPDATE World SET randomNumber = $1 WHERE id = $2";
 static fortuneSelect:       &'static str = "SELECT id, message FROM Fortune;";
 static worldRowCount:       i64 = 10000;
-static maxConnectionCount:  int = 256;
-static connectionPoolCount: uint = 5;
+static connectionPoolCount: uint = 10;
 
 static mut connectionPoolOption: Option<*PostgresConnectionPool> = None;
 
@@ -61,7 +60,7 @@ pub struct JSONWorld {
 
 #[deriving(Encodable)]
 pub struct JSONFortune {
-    id: &'static int,
+    id: int,
     message: &'static str
 }
 
@@ -93,9 +92,9 @@ fn single_query_handler(request: &Request, response: &mut ResponseWriter) {
                 let conn = (*connectionPool).get_connection();
                 let stmt = conn.prepare(worldSelect);
                 let mut rng = task_rng();
-                let row: i64 = rng.gen_range(1i64, worldRowCount + 1);
+                let id: i64 = rng.gen_range(1i64, worldRowCount + 1);
 
-                for row in stmt.query([&row as &ToSql]) {
+                for row in stmt.query([&id as &ToSql]) {
                     let world = JSONWorld {
                         id: row[1],
                         random_number: row[2],
