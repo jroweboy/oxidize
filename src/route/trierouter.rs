@@ -252,28 +252,12 @@ impl TrieRouterNode {
     }
 }
 
-// impl Clone for TrieRouterNode {
-//     fn clone(&self) -> TrieRouterNode {
-//         let mut children: SmallIntMap<TrieRouterNode>;
-//         for (k,v) in self.children.iter() {
-//             children.insert(k,v.clone());
-//         }
-
-//         TrieRouterNode {
-//             children: children,
-//             fptr: self.fptr,
-//             varname: self.varname.clone()   
-//         }
-//     }
-// }
-
 pub trait FindOrInsert {
     fn find_or_insert<'a>(&'a mut self, ch: char, node: TrieRouterNode) -> &'a mut TrieRouterNode;
 }
 
 impl FindOrInsert for SmallIntMap<TrieRouterNode> {
     fn find_or_insert<'a>(&'a mut self, ch: char, node: TrieRouterNode) -> &'a mut TrieRouterNode {
-        // let mut result = node;
         let c : uint = ch as uint;
         if self.contains_key(&c) {
             self.find_mut(&c).unwrap()
@@ -282,6 +266,5 @@ impl FindOrInsert for SmallIntMap<TrieRouterNode> {
             self.insert(c, node);
             self.find_mut(&c).unwrap()
         }
-        // result
     }
 }
