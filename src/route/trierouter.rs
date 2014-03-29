@@ -70,8 +70,7 @@ impl<'a> TrieRouter<'a> {
         let mut reverse_routes = HashMap::<~str,~str>::new();
         for route in routes.iter() {
             match *route {
-                Simple(r) => {reverse_routes.insert(r.name.to_owned(),r.path.to_owned());},
-                Variable(r) => {reverse_routes.insert(r.name.to_owned(),r.path.to_owned());}
+                Simple(r) | Variable(r) => {reverse_routes.insert(r.name.to_owned(),r.path.to_owned());}
             }
         }
         let trie = TrieRouter::build_routing_trie(&routes);
@@ -194,12 +193,12 @@ impl TrieRouterNode {
         }
 
         {
-            let mut ptr = self;
+            let mut current_node = self;
             for ch in path.chars() {
-                let tmp = ptr;
-                ptr = tmp.children.find_or_insert(ch, TrieRouterNode::new());
+                let tmp = current_node;
+                current_node = tmp.children.find_or_insert(ch, TrieRouterNode::new());
             }
-            ptr.fptr = Some(route.fptr);
+            current_node.fptr = Some(route.fptr);
         }
     }
 
@@ -216,16 +215,16 @@ impl TrieRouterNode {
         }
 
         {
-            let mut ptr = self;
+            let mut current_node = self;
             for ch in path.chars() {
                 if building_var && ch == '/' {
                     if current_var.len() == 0 {
                         // error: can't allow empty string as varname
                     }
-                    let tmp = ptr;
+                    let tmp = current_node;
                     let tmp2 = tmp.children.find_or_insert('^', TrieRouterNode::new());
                     tmp2.varname = Some(current_var.clone());
-                    ptr = tmp2.children.find_or_insert(ch, TrieRouterNode::new());
+                    current_node = tmp2.children.find_or_insert(ch, TrieRouterNode::new());
                     building_var = false;
                 }
                 else if building_var {
@@ -236,21 +235,23 @@ impl TrieRouterNode {
                     current_var.truncate(0);
                 }
                 else {
-                    let tmp = ptr;
-                    ptr = tmp.children.find_or_insert(ch, TrieRouterNode::new());
+                    let tmp = current_node;
+                    current_node = tmp.children.find_or_insert(ch, TrieRouterNode::new());
                 }
             }
             if building_var {
-                let tmp = ptr;
+                let tmp = current_node;
                 let tmp2 = tmp.children.find_or_insert('^', TrieRouterNode::new());
                 tmp2.varname = Some(current_var);
-                ptr = tmp2;
+                current_node = tmp2;
             }
-            ptr.fptr = Some(route.fptr);
+            current_node.fptr = Some(route.fptr);
         }
     }
 }
 
+// HashMap has this great find_or_insert function
+// but SmallIntMap doesn't, so I it
 pub trait FindOrInsert {
     fn find_or_insert<'a>(&'a mut self, ch: char, node: TrieRouterNode) -> &'a mut TrieRouterNode;
 }
