@@ -1,6 +1,5 @@
 use collections::hashmap::HashMap;
 use collections::smallintmap::SmallIntMap;
-use std::clone::Clone;
 use request;
 use sync::Arc;
 use route::Router;
