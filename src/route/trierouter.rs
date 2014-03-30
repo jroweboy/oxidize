@@ -1,10 +1,13 @@
 use collections::hashmap::HashMap;
 use collections::smallintmap::SmallIntMap;
 use request;
+use status;
+use status::Status;
 use sync::Arc;
 use route::Router;
 use request::Request;
 use http::server::ResponseWriter;
+use std::io::{File, IoError, IoErrorKind};
 
 //TODO: ensure routes are valid URLs
 // allowed url characters: $-_.+!*'(),
@@ -12,9 +15,6 @@ use http::server::ResponseWriter;
 // % is used for escaped characters
 // # is used for anchors
 // ~ is often used in urls even though it is "unsafe"
-// what should be the character used to represent a variable in the built tree?
-// maybe ^
-// what should be the character to act as a delimeter for variable when defining a route
 
 pub type View = fn (&Request, &mut ResponseWriter, &~[(~str,~str)]);
 
@@ -25,10 +25,18 @@ pub struct TrieRouter<'a> {
 
 impl<'a> Router for TrieRouter<'a> {
     fn route(&self, request: &mut request::Request, response: &mut ResponseWriter) {
-        let (handler,vars) = self.get_handler(request.uri);
-        match handler {
-            Some(fptr) => (fptr)(request, response, &vars),
-            None => debug!("Implement 404 for TrieRouter")
+        let routing_info = self.get_routing_info(request.uri);
+        match routing_info {
+            Handler(fptr,vars) => {
+                (fptr)(request, response, &vars);
+            },
+            StaticPath(dir,file) => {
+                let path = dir+file;
+                self.serve_static_file(path, response);
+            },
+            Error(status) => {
+                self.error_response(status, response);
+            },
         }
     }
     #[allow(unused_variable)]
@@ -70,7 +78,8 @@ impl<'a> TrieRouter<'a> {
         let mut reverse_routes = HashMap::<~str,~str>::new();
         for route in routes.iter() {
             match *route {
-                Simple(r) | Variable(r) => {reverse_routes.insert(r.name.to_owned(),r.path.to_owned());}
+                Variable(r) => {reverse_routes.insert(r.name.to_owned(),r.path.to_owned());},
+                Static(r) => {}
             }
         }
         let trie = TrieRouter::build_routing_trie(&routes);
@@ -80,7 +89,7 @@ impl<'a> TrieRouter<'a> {
         }
     }
 
-    pub fn get_handler<'a>(&'a self, uri: &str) -> (Option<View>,~[(~str,~str)]) {
+    pub fn get_routing_info<'a>(&'a self, uri: &str) -> RoutingInfo {
         let mut path = uri.to_owned();
 
         if path.len() != 1 && path[path.len() - 1] == '/' as u8 {
@@ -116,8 +125,8 @@ impl<'a> TrieRouter<'a> {
             else if current_node.children.contains_key(&(ch as uint)) {
                 current_node = current_node.children.get(&(ch as uint));
             }
-            else if current_node.children.contains_key(&('^' as uint)) {
-                current_node = current_node.children.get(&('^' as uint));
+            else if current_node.children.contains_key(&(':' as uint)) {
+                current_node = current_node.children.get(&(':' as uint));
                 // cloning here because it tried to move varname but the current_node 
                 // is only a non mutable pointer here so it can't move.
                 current_key = current_node.varname.clone().unwrap_or(~"");
@@ -134,11 +143,14 @@ impl<'a> TrieRouter<'a> {
             vars.push((current_key.clone(),current_var.clone()));
         }
 
-        if not_found {
-            (None, vars)
+        if not_found || (current_node.fptr.is_none() && current_node.staticdir.is_none()) {
+            Error(status::NotFound)
+        }
+        else if (current_node.fptr.is_none()) {
+            StaticPath(current_node.staticdir.clone().unwrap(),current_var)
         }
         else {
-            (current_node.fptr, vars)
+            Handler(current_node.fptr.unwrap(),vars)
         }
     }
 
@@ -147,17 +159,43 @@ impl<'a> TrieRouter<'a> {
 
         for route in routes.iter() {
             match *route {
-                Simple(r) => {root.add(r);},
-                Variable(r) => {root.add_variable(r);},
+                Variable(r) => {root.add(r);},
+                Static(r) => {root.add_static(r);}
             }
         }
         root
     }
+
+    fn serve_static_file(&self, path: ~str, response: &mut ResponseWriter) {
+        let mut file = File::open(&Path::new("."+path));
+
+        match file {
+            Ok(_) => {
+                
+            },
+            Err(e) => {
+                match e {
+                    FileNotFound => self.error_response(status::NotFound, response),
+                    _ => self.error_response(status::InternalServerError, response),
+                }
+            },
+        }
+    }
+
+    fn error_response(&self, status: Status, response: &mut ResponseWriter) {
+        //TODO: implement error responses and custom error responses
+    }
 }
 
 pub enum TrieRoute {
-    Simple(Route),
-    Variable(Route)
+    Variable(Route),
+    Static(StaticRoute),
+}
+
+enum RoutingInfo {
+    Error(Status),
+    Handler(View,~[(~str,~str)]),
+    StaticPath(~str,~str),
 }
 
 pub struct Route {
@@ -167,10 +205,16 @@ pub struct Route {
     pub fptr : View,
 }
 
+pub struct StaticRoute {
+    path: &'static str,
+    directory: &'static str,
+}
+
 struct TrieRouterNode {
     children: SmallIntMap<TrieRouterNode>,
     fptr: Option<View>,
     varname: Option<~str>,
+    staticdir: Option<~str>,
 }
 
 impl TrieRouterNode {
@@ -179,34 +223,18 @@ impl TrieRouterNode {
             children : SmallIntMap::new(),
             fptr: None,
             varname: None,
+            staticdir: None,
         }
     }
 
     fn add(&mut self, route: Route) {
-        let path = route.path;
-
-        if path[0] != '/' as u8 {
-            // warn!("route path must begin with '/'");
-        }
-        if path.len() != 1 && path[path.len()-1] == '/' as u8 {
-            // warn!("route path must not end with '/'");
-        }
-
-        {
-            let mut current_node = self;
-            for ch in path.chars() {
-                let tmp = current_node;
-                current_node = tmp.children.find_or_insert(ch, TrieRouterNode::new());
-            }
-            current_node.fptr = Some(route.fptr);
-        }
-    }
-
-    fn add_variable(&mut self, route: Route) {
         let mut current_var = ~"";
         let mut building_var = false;
         let path = route.path;
 
+        if path.len() == 0 {
+            // warn!("route path must not be empty")
+        }
         if path[0] != '/' as u8 {
             // error: route path must begin with '/'
         }
@@ -222,7 +250,7 @@ impl TrieRouterNode {
                         // error: can't allow empty string as varname
                     }
                     let tmp = current_node;
-                    let tmp2 = tmp.children.find_or_insert('^', TrieRouterNode::new());
+                    let tmp2 = tmp.children.find_or_insert(':', TrieRouterNode::new());
                     tmp2.varname = Some(current_var.clone());
                     current_node = tmp2.children.find_or_insert(ch, TrieRouterNode::new());
                     building_var = false;
@@ -241,11 +269,38 @@ impl TrieRouterNode {
             }
             if building_var {
                 let tmp = current_node;
-                let tmp2 = tmp.children.find_or_insert('^', TrieRouterNode::new());
+                let tmp2 = tmp.children.find_or_insert(':', TrieRouterNode::new());
                 tmp2.varname = Some(current_var);
                 current_node = tmp2;
             }
             current_node.fptr = Some(route.fptr);
+        }
+    }
+
+    fn add_static(&mut self, route: StaticRoute) {
+        let path = route.path;
+
+        if path.len() == 0 {
+            // warn!("route path must not be empty")
+        }
+        if path[0] != '/' as u8 {
+            // warn!("route path must begin with '/'");
+        }
+        if path.len() != 1 && path[path.len()-1] == '/' as u8 {
+            // warn!("route path must not end with '/'");
+        }
+
+        {
+            let mut current_node = self;
+            for ch in path.chars() {
+                let tmp = current_node;
+                current_node = tmp.children.find_or_insert(ch, TrieRouterNode::new());
+            }
+            let tmp = current_node;
+            let tmp2 = tmp.children.find_or_insert(':', TrieRouterNode::new());
+            current_node = tmp2;
+            current_node.varname = Some(~"filename");
+            current_node.staticdir = Some(route.directory.to_owned());
         }
     }
 }
