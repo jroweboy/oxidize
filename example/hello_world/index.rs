@@ -3,7 +3,7 @@ extern crate collections;
 
 use oxidize::{Oxidize, Request, ResponseWriter, Config, MediaType};
 use oxidize::route::Router;
-use oxidize::route::trierouter::{TrieRouter, TrieRoute, Route, Simple, Variable};
+use oxidize::route::trierouter::{TrieRouter, TrieRoute, Route, StaticRoute, Variable, Static};
 use oxidize::renderer::{render, mustache_render};
 use oxidize::status;
 use collections::hashmap::HashMap;
@@ -57,9 +57,10 @@ fn test_variable(request: &Request, response: &mut ResponseWriter, vars: &~[(~st
 
 fn main() {
     let routes: ~[TrieRoute] = ~[
-        Simple(Route{ method: "GET", name: "index", path: "/", fptr: index}),
-        Simple(Route{ method: "GET", name: "test_mustache", path: "/test", fptr: test_mustache}),
+        Variable(Route{ method: "GET", name: "index", path: "/", fptr: index}),
+        Variable(Route{ method: "GET", name: "test_mustache", path: "/test", fptr: test_mustache}),
         Variable(Route{ method: "GET", name: "test_variable", path: "/users/user-:userid/post-:postid", fptr: test_variable}),
+        Static(StaticRoute{ path: "/images", directory: "/img"}),
     ];
 
     let router = ~TrieRouter::new(routes);
