@@ -41,12 +41,6 @@ pub mod conf;
 pub struct Oxidize {
     conf: Arc<Config>,
     router: RefCell<~Router>,
-    // TODO: Add these other fields
-    // db : &'a DatabaseThingy,
-    // middleware : 
-    // template : &'a Template,
-    // template_dir : Path, // should this be a part of Template?
-    // add whatever other plugable things we wanna make
 }
 
 impl Oxidize {
