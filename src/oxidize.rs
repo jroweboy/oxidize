@@ -36,6 +36,7 @@ pub mod route;
 pub mod renderer;
 pub mod request;
 pub mod conf;
+pub mod mimetype;
 
 #[deriving(Clone)]
 pub struct Oxidize {
