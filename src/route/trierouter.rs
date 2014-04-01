@@ -1,13 +1,16 @@
 use collections::hashmap::HashMap;
 use collections::smallintmap::SmallIntMap;
 use request;
+use mimetype;
 use status;
 use status::Status;
 use sync::Arc;
 use route::Router;
 use request::Request;
 use http::server::ResponseWriter;
-use std::io::{File, IoError, IoErrorKind};
+use std::io;
+use std::io::File;
+use http::method;
 
 //TODO: ensure routes are valid URLs
 // allowed url characters: $-_.+!*'(),
@@ -32,7 +35,7 @@ impl<'a> Router for TrieRouter<'a> {
             },
             StaticPath(dir,file) => {
                 let path = dir+file;
-                self.serve_static_file(path, response);
+                self.serve_static_file(path, request, response);
             },
             Error(status) => {
                 self.error_response(status, response);
@@ -79,7 +82,7 @@ impl<'a> TrieRouter<'a> {
         for route in routes.iter() {
             match *route {
                 Variable(r) => {reverse_routes.insert(r.name.to_owned(),r.path.to_owned());},
-                Static(r) => {}
+                Static(_) => {}
             }
         }
         let trie = TrieRouter::build_routing_trie(&routes);
@@ -146,7 +149,7 @@ impl<'a> TrieRouter<'a> {
         if not_found || (current_node.fptr.is_none() && current_node.staticdir.is_none()) {
             Error(status::NotFound)
         }
-        else if (current_node.fptr.is_none()) {
+        else if current_node.fptr.is_none() {
             StaticPath(current_node.staticdir.clone().unwrap(),current_var)
         }
         else {
@@ -166,19 +169,25 @@ impl<'a> TrieRouter<'a> {
         root
     }
 
-    fn serve_static_file(&self, path: ~str, response: &mut ResponseWriter) {
-        let mut file = File::open(&Path::new("."+path));
-
-        match file {
-            Ok(_) => {
-                
-            },
-            Err(e) => {
-                match e {
-                    FileNotFound => self.error_response(status::NotFound, response),
-                    _ => self.error_response(status::InternalServerError, response),
+    fn serve_static_file(&self, path: ~str, request: &mut Request, response: &mut ResponseWriter) {
+        match request.method {
+            method::Get => {
+                let mut file = File::open(&Path::new("."+path));
+                let mut result = file.read_to_end();
+                match result {
+                    Ok(_) => {
+                        
+                    },
+                    Err(err) => {
+                        match err.kind {
+                            io::FileNotFound => self.error_response(status::NotFound, response),
+                            io::PermissionDenied => self.error_response(status::Forbidden, response),
+                            _ => self.error_response(status::InternalServerError, response),
+                        }
+                    },
                 }
             },
+            _ => self.error_response(status::MethodNotAllowed, response),
         }
     }
 
