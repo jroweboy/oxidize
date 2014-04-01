@@ -13,5 +13,5 @@ impl Clone for ~Router {
     }
 }
 
-pub mod regexrouter;
+//pub mod regexrouter;
 pub mod trierouter;

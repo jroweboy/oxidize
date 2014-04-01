@@ -1,7 +1,7 @@
 // don't think this is used anymore
 //extern crate extra;
 // libpcre provides regexs for routing
-extern crate pcre;
+//extern crate pcre;
 // holds references to HashMap
 extern crate collections;
 // need to pass the time info to 
