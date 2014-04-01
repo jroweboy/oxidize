@@ -34,11 +34,11 @@ impl<'a> Router for TrieRouter<'a> {
                 (fptr)(request, response, &vars);
             },
             StaticPath(dir,file) => {
-                let path = dir+file;
+                let path = dir+"/"+file;
                 self.serve_static_file(path, request, response);
             },
             Error(status) => {
-                self.error_response(status, response);
+                self.error_response(request.uri.to_owned(),status, response);
             },
         }
     }
@@ -170,29 +170,35 @@ impl<'a> TrieRouter<'a> {
     }
 
     fn serve_static_file(&self, path: ~str, request: &mut Request, response: &mut ResponseWriter) {
+        println!("{}","serve_static_file");
         match request.method {
             method::Get => {
                 let mut file = File::open(&Path::new("."+path));
                 let mut result = file.read_to_end();
                 match result {
                     Ok(_) => {
-                        
+                        let pieces: ~[&str] = path.rsplitn('.',1).collect();
+                        let extension = pieces[0].to_owned();
+                        let content_type = mimetype::content_type_from_ext(extension);
+                        response.headers.content_type = Some(content_type);
+                        response.write(result.unwrap());
                     },
                     Err(err) => {
                         match err.kind {
-                            io::FileNotFound => self.error_response(status::NotFound, response),
-                            io::PermissionDenied => self.error_response(status::Forbidden, response),
-                            _ => self.error_response(status::InternalServerError, response),
+                            io::FileNotFound => self.error_response(path, status::NotFound, response),
+                            io::PermissionDenied => self.error_response(path, status::Forbidden, response),
+                            _ => self.error_response(path, status::InternalServerError, response),
                         }
                     },
                 }
             },
-            _ => self.error_response(status::MethodNotAllowed, response),
+            _ => self.error_response(path, status::MethodNotAllowed, response),
         }
     }
 
-    fn error_response(&self, status: Status, response: &mut ResponseWriter) {
+    fn error_response(&self, uri: ~str, status: Status, response: &mut ResponseWriter) {
         //TODO: implement error responses and custom error responses
+        println!("{} {} {}", uri, status.code(), status.reason());
     }
 }
 
@@ -287,7 +293,7 @@ impl TrieRouterNode {
     }
 
     fn add_static(&mut self, route: StaticRoute) {
-        let path = route.path;
+        let path = route.directory;
 
         if path.len() == 0 {
             // warn!("route path must not be empty")
@@ -306,10 +312,11 @@ impl TrieRouterNode {
                 current_node = tmp.children.find_or_insert(ch, TrieRouterNode::new());
             }
             let tmp = current_node;
-            let tmp2 = tmp.children.find_or_insert(':', TrieRouterNode::new());
-            current_node = tmp2;
+            let tmp2 = tmp.children.find_or_insert('/', TrieRouterNode::new());
+            let tmp = tmp2.children.find_or_insert(':', TrieRouterNode::new());
+            current_node = tmp;
             current_node.varname = Some(~"filename");
-            current_node.staticdir = Some(route.directory.to_owned());
+            current_node.staticdir = Some(route.path.to_owned());
         }
     }
 }

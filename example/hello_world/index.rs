@@ -74,7 +74,7 @@ fn main() {
         Variable(Route{ method: "GET", name: "index", path: "/", fptr: index}),
         Variable(Route{ method: "GET", name: "test_mustache", path: "/test", fptr: test_mustache}),
         Variable(Route{ method: "GET", name: "test_variable", path: "/users/user-:userid/post-:postid", fptr: test_variable}),
-        Static(StaticRoute{ path: "/images", directory: "/img"}),
+        Static(StaticRoute{ path: "/public/css", directory: "/css"}),
     ];
 
     let router = ~TrieRouter::new(routes);
