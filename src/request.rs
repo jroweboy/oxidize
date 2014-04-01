@@ -15,6 +15,6 @@ pub struct Request<'a> {
 
 impl<'a> Request<'a> {
     pub fn reverse<'a>(&'a self, name: &str, vars: Option<~[(~str,~str)]>) -> Option<~str> {
-        self.router.get().reverse(name, vars)
+        self.router.reverse(name, vars)
     }
 }

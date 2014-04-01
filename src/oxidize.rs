@@ -1,20 +1,20 @@
-// don't think this is used anymore
-//extern crate extra;
-// libpcre provides regexs for routing
-//extern crate pcre;
+// TODO define all the lib things and linking stuff up here
+
+// the glorious logging crate
+#![feature(phase)]
+#[phase(syntax, link)] extern crate log;
 // holds references to HashMap
 extern crate collections;
 // need to pass the time info to 
 extern crate time;
 // needed for some Encodable stuff
 extern crate serialize;
-// templating is provided by rust-mustache
-extern crate mustache;
+// templating is provided by rust-mustache -- making that required in userland only!
+// extern crate mustache;
 // handles all the http stuff
 extern crate http;
 // used for holding the pcre struct in a mutable multithreaded way
 extern crate sync;
-
 
 // It turns out its real easy to reexport mods :D
 // People that extern mod oxidize can use oxidize::reexported::mod;
@@ -58,7 +58,7 @@ impl Oxidize {
     }
 
     pub fn serve(self) {
-        debug!("Server is now running at {}", self.conf.get().bind_addr.to_str());
+        debug!("Server is now running at {}", self.conf.bind_addr.to_str());
         self.serve_forever();
     }
 
@@ -66,7 +66,7 @@ impl Oxidize {
 
 impl Server for Oxidize {
     fn get_config(&self) -> http::server::Config {
-        let bind_addr = self.conf.get().bind_addr;
+        let bind_addr = self.conf.bind_addr;
         http::server::Config { bind_address: bind_addr }
     }
 
@@ -94,6 +94,7 @@ impl Server for Oxidize {
             router : self.router.borrow()
         };
 
-        self.router.with(|r: &~Router| {r.route(my_request, response);});
+        // self.router.with(|r: &~Router| {r.route(my_request, response);});
+        self.router.get().route(my_request, response);
     }
 }

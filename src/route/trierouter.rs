@@ -26,7 +26,7 @@ impl<'a> Router for TrieRouter<'a> {
     fn reverse<'a>(&'a self, name: &str, vars: Option<~[(~str,~str)]>) -> Option<~str> {
         // TODO: use the vars to replace
         match vars {
-            Some(list) => self.reverse_routes.get().find_equiv(&name).and_then(
+            Some(list) => self.reverse_routes.find_equiv(&name).and_then(
                 |path: &'a ~str| {
                     let mut original_path = path.clone();
                     let mut new_path: ~str;
@@ -41,7 +41,7 @@ impl<'a> Router for TrieRouter<'a> {
                     Some(original_path)
                 }
             ),
-            None => self.reverse_routes.get().find_equiv(&name).and_then(
+            None => self.reverse_routes.find_equiv(&name).and_then(
                 |path: &'a ~str| {
                     Some(path.to_owned())
                 }
@@ -81,7 +81,7 @@ impl<'a> TrieRouter<'a> {
             path.pop_char();
         }
 
-        let mut current_node = self.trie.get();
+        let mut current_node : &TrieNode = self.trie.deref();
         let mut current_var = ~"";
         let mut current_key = ~"";
         let mut building_var = false;
