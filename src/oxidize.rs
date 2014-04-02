@@ -40,11 +40,11 @@ pub mod conf;
 #[deriving(Clone)]
 pub struct Oxidize {
     conf: Arc<Config>,
-    router: RefCell<~Router>,
+    router: RefCell<~Router:Send>,
 }
 
 impl Oxidize {
-    pub fn new(conf: Config, router: ~Router) -> Oxidize {
+    pub fn new(conf: Config, router: ~Router:Send) -> Oxidize {
         Oxidize {
             conf: Arc::new(conf),
             router: RefCell::new(router),

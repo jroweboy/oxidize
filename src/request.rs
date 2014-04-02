@@ -10,7 +10,7 @@ pub struct Request<'a> {
     GET : Option<HashMap<~str, ~str>>,
     POST : Option<HashMap<~str, ~str>>,
     context : Option<HashMap<~str,~str>>,
-    router : Ref<'a, ~Router>,
+    router : Ref<'a, ~Router:Send>,
 }
 
 impl<'a> Request<'a> {
