@@ -113,7 +113,37 @@ fn single_query_handler(request: &Request, response: &mut ResponseWriter) {
 
 #[allow(unused_must_use)]
 fn multiple_queries_handler(request: &Request, response: &mut ResponseWriter) {
+    unsafe {
+        match connectionPoolOption {
+            Some(connectionPoolVoidPointer) => {
+                let connectionPool: *PostgresConnectionPool = cast::transmute(connectionPoolVoidPointer);
+                let conn = (*connectionPool).get_connection();
+                let stmt = conn.prepare(worldSelect);
+                let mut rng = task_rng();
+                let numQueries = 100;
+                let mut result = ~[];
 
+                for i in range(0, numQueries) {
+                    let id: i64 = rng.gen_range(1i64, worldRowCount + 1);
+
+                    for row in stmt.query([&id as &ToSql]) {
+                        let world = JSONWorld {
+                            id: row[1],
+                            random_number: row[2],
+                        };
+                        
+                        result.push(world);
+                    }
+                }
+
+                response.write_content_auto(
+                    MediaType {type_: ~"application",subtype: ~"json",parameters: ~[]}, 
+                    json::Encoder::str_encode(&result)
+                );
+            }
+            None => { println!("Could not get database connection pool");}
+        }
+    }
 }
 
 #[allow(unused_must_use)]
