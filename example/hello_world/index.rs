@@ -1,10 +1,11 @@
 extern crate oxidize;
 extern crate collections;
+extern crate mustache;
 
 use oxidize::{Oxidize, Request, ResponseWriter, Config, MediaType};
 use oxidize::route::Router;
 use oxidize::route::trierouter::{TrieRouter, TrieRoute, Route, Simple, Variable};
-use oxidize::renderer::{render, mustache_render};
+use oxidize::renderer::render;
 use oxidize::status;
 use collections::hashmap::HashMap;
 use std::io::net::ip::SocketAddr;
@@ -70,4 +71,22 @@ fn main() {
 
     let server = Oxidize::new(conf, router as ~Router);
     server.serve();
+}
+
+pub fn mustache_render<'a>(file_name: &'a str, 
+                    context: Option<&'a HashMap<~str,~str>>) -> ~str {
+    let path = Path::new("templates/"+file_name);
+    // debug!("Render for this file: {}", path.display());
+    let file_contents = File::open(&path).read_to_end().unwrap();
+    // TODO: add the request to the context so that they can use things like session vars
+    let contents = from_utf8(file_contents).expect("File could not be parsed as UTF8");
+
+    // TODO: Performance: I don't think I need to clone here
+    // TODO: Performance: at compile/first run I should be able to compile and 
+    // load all the templates into memory and just render templates?
+    if context.is_some() {
+        mustache::render_str(contents, &context.unwrap().clone())
+    } else {
+        mustache::render_str(contents, &~"")
+    }
 }

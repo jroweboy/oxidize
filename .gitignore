@@ -3,6 +3,7 @@ build/*
 bin
 http
 lib/
+tmp/
 
 # ignore any libraries folders
 rust-http
