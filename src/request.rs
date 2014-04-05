@@ -5,12 +5,12 @@ use route::Router;
 
 #[allow(uppercase_variables)]
 pub struct Request<'a> {
-    method : Method,
-    uri: ~str,
-    GET : Option<HashMap<~str, ~str>>,
-    POST : Option<HashMap<~str, ~str>>,
-    context : Option<HashMap<~str,~str>>,
-    router : Ref<'a, ~Router:Send>,
+    pub method : Method,
+    pub uri: ~str,
+    pub GET : Option<HashMap<~str, ~str>>,
+    pub POST : Option<HashMap<~str, ~str>>,
+    pub context : Option<HashMap<~str,~str>>,
+    pub router : Ref<'a, ~Router:Send>,
 }
 
 impl<'a> Request<'a> {

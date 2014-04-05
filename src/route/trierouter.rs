@@ -10,8 +10,8 @@ use http::server::ResponseWriter;
 pub type View = fn (&Request, &mut ResponseWriter, &~[(~str,~str)]);
 
 pub struct TrieRouter<'a> {
-    priv trie: Arc<TrieNode>,
-    priv reverse_routes: Arc<HashMap<~str, ~str>>
+    trie: Arc<TrieNode>,
+    reverse_routes: Arc<HashMap<~str, ~str>>
 }
 
 impl<'a> Router for TrieRouter<'a> {
