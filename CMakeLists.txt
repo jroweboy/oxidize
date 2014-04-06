@@ -39,10 +39,10 @@ add_dependencies(oxidize_target rust_mustache rust_http)
 #--- example
 
 
-rust_crate(example/hello_world/index.rs
-            TARGET_NAME HELLO_WORLD
-            DEPENDS ${OXIDIZE_FULL_TARGET}
-            )
-add_custom_target(hello_world_target
-            ALL
-            DEPENDS ${OXIDIZE_FULL_TARGET} ${HELLO_WORLD_FULL_TARGET})
+#rust_crate(example/hello_world/index.rs
+#            TARGET_NAME HELLO_WORLD
+#            DEPENDS ${OXIDIZE_FULL_TARGET}
+#            )
+#add_custom_target(hello_world_target
+#            ALL
+#            DEPENDS ${OXIDIZE_FULL_TARGET} ${HELLO_WORLD_FULL_TARGET})

@@ -2,35 +2,18 @@
 extern crate serialize;
 
 use std::io::File;
-use std::str::{from_utf8, from_utf8_owned};
-use collections::hashmap::HashMap;
+use std::str::{from_utf8_owned};
 
 
-//Removed the request for now since its not used request: &'a mut Request, 
+// My goal is to move this to a user side thing that they can link against maybe
+// so until then I have this ugly hack in place to load the template dir
+// static mut TEMPLATE_DIR : [u8, ..255] = [0, ..255];
+pub static mut TEMPLATE_DIR : &'static str = "";
 pub fn render<'a>(file_name: &'a str) -> ~str {
     // TODO: the templates dir probably shouldn't be hard coded
-    let path = Path::new("templates/"+file_name);
+    let path = Path::new(unsafe{TEMPLATE_DIR+file_name});
     debug!("Render for this file: {}", path.display());
     let file_contents = File::open(&path).read_to_end().unwrap();
     // TODO: add the request to the context so that they can use things like session vars?
     from_utf8_owned(file_contents).expect("File could not be parsed as UTF8")
 }
-
-// ditto above request: &'a mut Request, 
-// pub fn mustache_render<'a>(file_name: &'a str, 
-//                     context: Option<&'a HashMap<~str,~str>>) -> ~str {
-//     let path = Path::new("templates/"+file_name);
-//     debug!("Render for this file: {}", path.display());
-//     let file_contents = File::open(&path).read_to_end().unwrap();
-//     // TODO: add the request to the context so that they can use things like session vars
-//     let contents = from_utf8(file_contents).expect("File could not be parsed as UTF8");
-
-//     // TODO: Performance: I don't think I need to clone here
-//     // TODO: Performance: at compile/first run I should be able to compile and 
-//     // load all the templates into memory and just render templates?
-//     if context.is_some() {
-//         mustache::render_str(contents, &context.unwrap().clone())
-//     } else {
-//         mustache::render_str(contents, &~"")
-//     }
-// }

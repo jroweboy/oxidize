@@ -140,10 +140,10 @@ pub enum TrieRoute {
 }
 
 pub struct Route {
-    method: &'static str,
-    path : &'static str,
-    name : &'static str,
-    fptr : View,
+    pub method: &'static str,
+    pub path : &'static str,
+    pub name : &'static str,
+    pub fptr : View,
 }
 
 struct TrieNode {

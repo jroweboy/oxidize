@@ -45,6 +45,7 @@ pub struct Oxidize {
 
 impl Oxidize {
     pub fn new(conf: Config, router: ~Router:Send) -> Oxidize {
+        unsafe { renderer::TEMPLATE_DIR = conf.template_dir.unwrap_or(""); }
         Oxidize {
             conf: Arc::new(conf),
             router: RefCell::new(router),
@@ -89,6 +90,6 @@ impl Server for Oxidize {
         };
 
         // self.router.with(|r: &~Router| {r.route(my_request, response);});
-        self.router.get().route(my_request, response);
+        self.router.borrow().route(my_request, response);
     }
 }
