@@ -3,8 +3,4 @@ build/*
 bin
 http
 lib/
-
-# ignore any libraries folders
-rust-http
-rust-pcre
-rust-mustache
+tmp/

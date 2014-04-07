@@ -4,17 +4,20 @@ extern crate collections;
 use oxidize::{Oxidize, Request, ResponseWriter, Config, MediaType};
 use oxidize::route::Router;
 use oxidize::route::trierouter::{TrieRouter, TrieRoute, Route, Simple, Variable};
-use oxidize::renderer::{render, mustache_render};
 use oxidize::status;
+use renderer::{render, mustache_render};
 use collections::hashmap::HashMap;
 use std::io::net::ip::SocketAddr;
+use std::os::make_absolute;
+
+mod renderer;
 
 #[allow(unused_must_use)]
 fn index(request: &Request, response: &mut ResponseWriter, vars: &~[(~str,~str)]) {
     // TODO: maybe make a macro to make this look nicer? But this is faster at least :p
     response.status = status::Ok;
     response.write_content_auto(
-        MediaType {type_: ~"text",subtype: ~"html",parameters: ~[]}, 
+        MediaType {type_: ~"text", subtype: ~"html", parameters: vec!()}, 
         render("index.html")
     );
 }
@@ -30,8 +33,8 @@ fn test_mustache(request: &Request, response: &mut ResponseWriter, vars: &~[(~st
 
     response.status = status::Ok;
     response.write_content_auto(
-        MediaType {type_: ~"text",subtype: ~"html",parameters: ~[]}, 
-        mustache_render("mustache.html", Some(&context))
+        MediaType {type_: ~"text", subtype: ~"html", parameters: vec!()}, 
+        mustache_render("mustache.html", Some(&context)).unwrap()
     );
 }
 
@@ -50,12 +53,23 @@ fn test_variable(request: &Request, response: &mut ResponseWriter, vars: &~[(~st
 
     response.status = status::Ok;
     response.write_content_auto(
-        MediaType{type_: ~"text",subtype: ~"html",parameters: ~[]}, 
-        mustache_render("variable.html", Some(&context))
+        MediaType{type_: ~"text",subtype: ~"html",parameters: vec!()}, 
+        mustache_render("variable.html", Some(&context)).unwrap()
     );
 }
 
+// just set this to the templates dir relative to the binary location
+static TEMPLATE_DIR : &'static str = "../templates";
 fn main() {
+    let file_name = std::os::args()[0];
+
+    // yeah I know this is flimsy and will break, but its better than befores
+    let split : ~[&str] = file_name.rsplitn('/', 1).collect();
+    let path = Path::new(split[1]+ "/" + TEMPLATE_DIR);
+    let absolute_path = make_absolute(&path);
+    println!("base_path: {}", absolute_path.display());
+    renderer::setup(&absolute_path);
+
     let routes: ~[TrieRoute] = ~[
         Simple(Route{ method: "GET", name: "index", path: "/", fptr: index}),
         Simple(Route{ method: "GET", name: "test_mustache", path: "/test", fptr: test_mustache}),
@@ -68,6 +82,6 @@ fn main() {
         bind_addr: from_str::<SocketAddr>("127.0.0.1:8001").unwrap(),
     };
 
-    let server = Oxidize::new(conf, router as ~Router);
+    let server = Oxidize::new(conf, router as ~Router:Send);
     server.serve();
 }
