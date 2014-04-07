@@ -221,8 +221,8 @@ pub struct Route {
 }
 
 pub struct StaticRoute {
-    path: &'static str,
-    directory: &'static str,
+    pub path: &'static str,
+    pub directory: &'static str,
 }
 
 struct TrieRouterNode {
