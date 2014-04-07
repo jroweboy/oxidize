@@ -99,7 +99,7 @@ impl<'a> TrieRouter<'a> {
             path.pop_char();
         }
 
-        let mut current_node : &TrieNode = self.trie.deref();
+        let mut current_node : &TrieRouterNode = self.trie.deref();
         let mut current_var = ~"";
         let mut current_key = ~"";
         let mut building_var = false;
@@ -178,7 +178,7 @@ impl<'a> TrieRouter<'a> {
                 match result {
                     Ok(_) => {
                         let pieces: ~[&str] = path.rsplitn('.',1).collect();
-                        let extension = pieces[0].to_owned();
+                        let extension = pieces[0];
                         let content_type = mimetype::content_type_from_ext(extension);
                         response.headers.content_type = Some(content_type);
                         response.write(result.unwrap());
