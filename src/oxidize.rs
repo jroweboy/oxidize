@@ -33,7 +33,6 @@ use sync::Arc;
 use std::cell::RefCell;
 
 pub mod route;
-pub mod renderer;
 pub mod request;
 pub mod conf;
 
@@ -45,7 +44,7 @@ pub struct Oxidize {
 
 impl Oxidize {
     pub fn new(conf: Config, router: ~Router:Send) -> Oxidize {
-        unsafe { renderer::TEMPLATE_DIR = conf.template_dir.unwrap_or(""); }
+        // unsafe { renderer::TEMPLATE_DIR = conf.template_dir.unwrap_or(""); }
         Oxidize {
             conf: Arc::new(conf),
             router: RefCell::new(router),

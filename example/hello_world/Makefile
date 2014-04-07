@@ -7,7 +7,8 @@ RUSTFLAGS ?= -O
 #RUSTFLAGS ?= -g
 
 hello_files=\
-	index.rs
+	index.rs\
+    renderer.rs
 
 all: hello_world
 
