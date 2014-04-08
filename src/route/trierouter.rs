@@ -174,14 +174,14 @@ impl<'a> TrieRouter<'a> {
         match request.method {
             method::Get => {
                 let mut file = File::open(&Path::new("."+path));
-                let mut result = file.read_to_end();
+                let result = file.read_to_end();
                 match result {
-                    Ok(_) => {
+                    Ok(res) => {
                         let pieces: ~[&str] = path.rsplitn('.',1).collect();
                         let extension = pieces[0];
                         let content_type = mimetype::content_type_from_ext(extension);
                         response.headers.content_type = Some(content_type);
-                        response.write(result.unwrap());
+                        response.write(res);
                     },
                     Err(err) => {
                         match err.kind {

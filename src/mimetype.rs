@@ -12,7 +12,7 @@ pub fn content_type_from_ext(extension: &str) -> MediaType {
     }
 }
 
-fn mimetype_from_ext<'a>(extension: &str) -> ~str {
+fn mimetype_from_ext(extension: &str) -> ~str {
     match extension {
         // application
         "eot"              => ~"application/vnd.ms-fontobject",
