@@ -11,6 +11,7 @@ use http::server::ResponseWriter;
 use std::io;
 use std::io::File;
 use http::method;
+use std::os::make_absolute;
 
 //TODO: ensure routes are valid URLs
 // allowed url characters: $-_.+!*'(),
@@ -23,7 +24,8 @@ pub type View = fn (&Request, &mut ResponseWriter, &~[(~str,~str)]);
 
 pub struct TrieRouter<'a> {
     trie: Arc<TrieRouterNode>,
-    reverse_routes: Arc<HashMap<~str, ~str>>
+    reverse_routes: Arc<HashMap<~str, ~str>>,
+    static_path: ~str,
 }
 
 impl<'a> Router for TrieRouter<'a> {
@@ -72,12 +74,13 @@ impl<'a> Router for TrieRouter<'a> {
         ~TrieRouter {
             trie: self.trie.clone(),
             reverse_routes: self.reverse_routes.clone(),
+            static_path: self.static_path.clone(),
         } as ~Router
     }
 }
 
 impl<'a> TrieRouter<'a> {
-    pub fn new(routes: ~[TrieRoute]) -> TrieRouter {
+    pub fn new(routes: ~[TrieRoute], static_path: ~str) -> TrieRouter {
         let mut reverse_routes = HashMap::<~str,~str>::new();
         for route in routes.iter() {
             match *route {
@@ -85,10 +88,12 @@ impl<'a> TrieRouter<'a> {
                 Static(_) => {}
             }
         }
+
         let trie = TrieRouter::build_routing_trie(&routes);
         TrieRouter {
             trie: Arc::new(trie),
-            reverse_routes: Arc::new(reverse_routes)
+            reverse_routes: Arc::new(reverse_routes),
+            static_path: static_path,
         }
     }
 
@@ -170,10 +175,11 @@ impl<'a> TrieRouter<'a> {
     }
 
     fn serve_static_file(&self, path: ~str, request: &mut Request, response: &mut ResponseWriter) {
-        println!("{}","serve_static_file");
         match request.method {
             method::Get => {
-                let mut file = File::open(&Path::new("."+path));
+                let p = Path::new(self.static_path + path);
+                let absolute_path = make_absolute(&p);
+                let mut file = File::open(&absolute_path);
                 let result = file.read_to_end();
                 match result {
                     Ok(res) => {

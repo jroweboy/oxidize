@@ -58,15 +58,19 @@ fn test_variable(request: &Request, response: &mut ResponseWriter, vars: &~[(~st
     );
 }
 
-// just set this to the templates dir relative to the binary location
-static TEMPLATE_DIR : &'static str = "../templates";
+// just set this to app's base path relative to the binary location
+static APP_PATH : &'static str = "..";
+
+// just set this to the template's dir relative to the app's base path
+static TEMPLATE_DIR_NAME : &'static str = "templates";
 fn main() {
     let file_name = std::os::args()[0];
 
     // yeah I know this is flimsy and will break, but its better than befores
     let split : ~[&str] = file_name.rsplitn('/', 1).collect();
-    let path = Path::new(split[1]+ "/" + TEMPLATE_DIR);
-    let absolute_path = make_absolute(&path);
+    let base_path = split[1] + "/" + APP_PATH;
+    let template_path = Path::new(base_path + "/" + TEMPLATE_DIR_NAME);
+    let absolute_path = make_absolute(&template_path);
     println!("base_path: {}", absolute_path.display());
     renderer::setup(&absolute_path);
 
@@ -77,7 +81,8 @@ fn main() {
         Static(StaticRoute{ path: "/public/css", directory: "/css"}),
     ];
 
-    let router = ~TrieRouter::new(routes);
+    // the router must be passed the base path of the app relative to the binary location
+    let router = ~TrieRouter::new(routes,base_path);
     let conf = Config {
         debug: true,
         bind_addr: from_str::<SocketAddr>("127.0.0.1:8001").unwrap(),
