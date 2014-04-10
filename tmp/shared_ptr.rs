@@ -13,24 +13,24 @@ use sync::{RWLock, Arc};
 
 #[deriving(Clone)]
 struct Oxidize<'a> {
-    pub config : &'a Config,
+    pub conf : &'a Config,
     // pub app : &'a App,
-    pub router : RefCell<~Router:Send>,
+    pub router : RefCell<~Router<'a>:Send>,
     // pub filters : ~[~MiddleWare],
 }
 
-trait App {
-    fn get_routes(&self) -> ~Router:Send;
+trait App<'a> {
+    fn get_router(&self) -> ~Router<'a>:Send;
 }
 
 struct MyApp {
-    pub render: Renderer,
+    renderer: Renderer,
 }
 
 struct Renderer;
 
 impl Renderer {
-    fn print() {
+    fn print(&self) {
         println!("Rendered!");
     }
 }
@@ -47,52 +47,57 @@ struct Response {
     text: ~str
 }
 
-trait Router:Send {
-    fn add_route(&self, &str, |Request, &mut Response|);
+trait Router<'a>:Send {
+    fn add_route(&self, &str, |Request, &mut Response|: 'a);
     fn route(&self, Request, &mut Response);
-    fn copy(&self) -> ~Router:Send;
+    fn copy(&self) -> ~Router<'a>:Send;
 }
 
-impl Clone for ~Router:Send {
-    fn clone(&self) -> ~Router:Send {
+impl<'a> Clone for ~Router<'a>:Send {
+    fn clone(&self) -> ~Router<'a>:Send {
         self.copy()
     }
 }
 
 // not fully operational but good enough for now
 struct MatchRouter<'a> {
-    routes : Arc<RWLock<Vec<|Request, &mut Response|: 'a>>>,
+    // make this a tuple of uris method and closure?
+    routes : Arc<RWLock<~[|Request, &mut Response|: 'a]>>,
 }
 
-impl<'a> Router for MatchRouter<'a> {
+impl<'a> Router<'a> for MatchRouter<'a> {
     fn add_route(&self, path: &str, f: |Request, &mut Response|: 'a){
-        self.routes.write().push(f);
+        // self.routes.write().push(f);
     }
     fn route(&self, req: Request, res: &mut Response) {
         match req.url {
-            "/index" => (self.routes.read().get(0))(req, res),
-            "/hello" => (self.routes.read().get(1))(req, res),
+            "/index" => (*self.routes.read().get(0).unwrap())(req, res),
+            "/hello" => (*self.routes.read().get(1).unwrap())(req, res),
             _ => unreachable!(),
         };
     }
-    fn copy(&self) -> ~Router:Send {
+    fn copy(&self) -> ~Router<'a>:Send {
         ~MatchRouter {
             routes: self.routes.clone(),
-        } as ~Router:Send
+        } as ~Router<'a>:Send
     }
 }
 
-impl App for MyApp {
-    fn get_router(&self) -> ~Router:Send {
-        let a = ~MatchRouter{routes: Arc::new(RWLock::new(Vec::new()))};
-        a.add_route("/index", |req, &mut res| {self.index()});
-        a.add_route("/hello", |req, &mut res| {self.hello()});
-        a as ~Router:Send
+impl<'a> App<'a> for MyApp {
+    fn get_router(&self) -> ~Router<'a>:Send {
+        let routes : ~[|Request, &mut Response|: 'a] = ~[
+            |req, res| {self.index()},
+            |req, res| {self.hello()},
+        ];
+        let a = ~MatchRouter{routes: Arc::new(RWLock::new(routes))};
+        // a.add_route("/index", |req, res| {self.index()});
+        // a.add_route("/hello", |req, res| {self.hello()});
+        a as ~Router<'a>:Send
     }
 }
 
 impl MyApp {
-    fn index(&self) { self.render(); }
+    fn index(&self) { self.renderer.print(); }
     fn hello(&self) { println!("hello!"); }
 }
 
@@ -104,10 +109,10 @@ impl<'a> Server for Oxidize<'a> {
     }
 
     fn handle_request(&self, req: &http::server::Request, response: &mut ResponseWriter) {
-        let q = Request{ method: "test" };
+        let q = Request{ url: "test" };
         let mut s = Response{ text: ~"hehe" };
 
-        self.router.route(q, &mut s);
+        self.router.borrow().route(q, &mut s);
     }
 }
 
