@@ -9,29 +9,29 @@ use std::cell::RefCell;
 use http::server::ResponseWriter;
 use http::server::Server;
 
-use sync::{RWLock, Arc};
+use sync::{RWLock, Arc, Weak};
 
 #[deriving(Clone)]
 struct Oxidize<'a> {
-    pub conf : Arc<&'a Config>,
-    pub router : RefCell<~Router<'a>:Send>,
+    pub conf : Arc<Config>,
+    pub router : RefCell<~Router<'a>:Send+Share>,
     // pub filters : ~[~MiddleWare],
 }
 
 trait App<'a>:Send+Share {
-    fn get_router(&'a self) -> ~Router<'a>:Send;
+    fn get_router(&'a self) -> ~Router<'a>:Send+Share;
     fn handle_route(&self, reverse: &str);
 }
 
 impl<'a> App<'a> for MyApp<'a> {
-    fn get_router(&'a self) -> ~Router<'a>:Send {
+    fn get_router(&'a self) -> ~Router<'a>:Send+Share {
         ~MatchRouter {
             app: Arc::new(RWLock::new(self as &'a App:Send+Share)),
             routes: Arc::new(RWLock::new(~[
                 ("GET", "index", "/index"), 
                 ("GET", "hello", "/hello"), 
             ])),
-        } as ~Router:Send
+        } as ~Router:Send+Share
     }
 
     fn handle_route(&self, reverse: &str) {
@@ -44,18 +44,18 @@ impl<'a> App<'a> for MyApp<'a> {
 }
 
 struct MyApp<'a> {
-    router : Arc<Option<&'a Router<'a>:Send>>,
-    renderer: Arc<Renderer>,
+    router : Weak<&'a Router<'a>:Send+Share>,
+    // renderer: Arc<Renderer>,
 }
 
 trait Router<'a>:Send {
     fn add_route(&self, method: &str, name: &str, url: &str);
     fn route(&self, Request, &mut Response);
-    fn copy(&self) -> ~Router<'a>:Send;
+    fn copy(&self) -> ~Router<'a>:Send+Share;
 }
 
-impl<'a> Clone for ~Router<'a>:Send {
-    fn clone(&self) -> ~Router<'a>:Send {
+impl<'a> Clone for ~Router<'a>:Send+Share {
+    fn clone(&self) -> ~Router<'a>:Send+Share {
         self.copy()
     }
 }
@@ -76,16 +76,16 @@ impl<'a> Router<'a> for MatchRouter<'a> {
             _ => unreachable!(),
         };
     }
-    fn copy(&self) -> ~Router<'a>:Send {
+    fn copy(&self) -> ~Router<'a>:Send+Share {
         ~MatchRouter {
             app: self.app.clone(),
             routes: self.routes.clone(),
-        } as ~Router<'a>:Send
+        } as ~Router<'a>:Send+Share
     }
 }
 
 impl<'a> MyApp<'a> {
-    fn index(&self) { self.renderer.print(); }
+    fn index(&self) { println!("index!"); } //self.renderer.print(); }
     fn hello(&self) { println!("hello!"); }
 }
 
