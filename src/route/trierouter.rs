@@ -54,7 +54,7 @@ impl<'a> Router for TrieRouter<'a> {
                     for var in list.iter() {
                         let t = var.clone();
                         let (mut k,v) = t;
-                        k.unshift_char(':');
+                        k = ":" + k;
                         new_path = original_path.replace(k,v);
                         original_path = new_path.clone();
                     }
@@ -101,7 +101,7 @@ impl<'a> TrieRouter<'a> {
         let mut path = uri.to_owned();
 
         if path.len() != 1 && path[path.len() - 1] == '/' as u8 {
-            path.pop_char();
+            path = path.as_slice().slice_to(path.len() - 1).to_owned();
         }
 
         let mut current_node : &TrieRouterNode = self.trie.deref();
@@ -124,7 +124,7 @@ impl<'a> TrieRouter<'a> {
                 }
             }
             else if building_var {
-                current_var.push_char(ch);
+                current_var  = current_var + ch.to_str();
             }
             // putting this else block before the next one allows routes to "clash"
             // e.g. route1: "/blog/post:id"
@@ -139,7 +139,7 @@ impl<'a> TrieRouter<'a> {
                 // is only a non mutable pointer here so it can't move.
                 current_key = current_node.varname.clone().unwrap_or(~"");
                 current_var.truncate(0);
-                current_var.push_char(ch);
+                current_var = current_var + ch.to_str();
                 building_var = true;
             }
             else {
@@ -187,7 +187,7 @@ impl<'a> TrieRouter<'a> {
                         let extension = pieces[0];
                         let content_type = mimetype::content_type_from_ext(extension);
                         response.headers.content_type = Some(content_type);
-                        response.write(res);
+                        response.write(res.as_slice());
                     },
                     Err(err) => {
                         match err.kind {
@@ -277,7 +277,7 @@ impl TrieRouterNode {
                     building_var = false;
                 }
                 else if building_var {
-                    current_var.push_char(ch);
+                    current_var = current_var + ch.to_str();
                 }
                 else if ch == ':' {
                     building_var = true;
