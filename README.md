@@ -7,7 +7,7 @@ Goals
 
 oxidize aims to make it easy to write clean and testable web application that is both fast and safe. Rust as a language has amazing support of many of the things that you would want from a web framework but surprisingly there isn't any rich frameworks yet! oxidize will fill that hole by providing a clean framework that should be simple to use, sufficiently decoupled (able to swap components without having to hack at the core), and fast (just like the goal of rust). As such, a primary milestone of oxidize will be to enter the framework into the web framework benchmarks by TechEmpower.
 
-Rust Verison
+Rust Version
 =======
 
 oxidize tries to keep up with rust master as much as possible, but it is hard to constantly update all of the dependancies, their test cases, oxidize and the example applications. Because of this, for now, the README will contain the latest know hash that it will guarenteed compile for and so if it just so happens to not compile on master, you can at least load that version and it will compile. Once I update it to a rust master I will post a commit hash into the README (it is currently not compiling as of right now). 
