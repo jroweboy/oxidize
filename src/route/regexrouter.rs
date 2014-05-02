@@ -1,3 +1,8 @@
+//! DEPRECATED, this is not going to work (since it was written a long time ago)
+//! but I've never profiled it so if the idea is faster than some other implementations
+//! feel free to resurrect this code. I'm soon just going to remove it from the repo,
+//! but it will forevevr be in the git history
+
 use collections::hashmap::HashMap;
 use collections::enum_set::EnumSet;
 use pcre::{CompileOption, StudyOption, ExtraOption, Pcre, Match};
