@@ -7,16 +7,16 @@
 
 use request::Request;
 use http::server::ResponseWriter;
-use router::Router;
+use route::{Router, RouteInfo};
 
-trait App:Send+Share {
-    //! receive a string that indicates which route to call and also any of the
-    //! parsed url parameters. This function should bind these parameters 
-    //! to variables and pass them to the requested user function (TODO)
-    fn handle_route(&self, url: &str, &Request, &mut ResponseWriter);
+pub trait App:Send+Share {
+    /// receive a string that indicates which route to call and also any of the
+    /// parsed url parameters. This function should bind these parameters 
+    /// to variables and pass them to the requested user function (TODO)
+    fn handle_route(&self, info: RouteInfo, &mut Request, &mut ResponseWriter);
 
-    //! a static function that will create a list of the routes and prepare a 
-    //! router for the application to use. By handling the routes in this manner,
-    //! it should be fairly simple to one day support pluggable applications
+    /// a static function that will create a list of the routes and prepare a 
+    /// router for the application to use. By handling the routes in this manner,
+    /// it should be fairly simple to one day support pluggable applications
     fn get_router() -> ~Router:Send+Share;
 }

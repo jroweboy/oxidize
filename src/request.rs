@@ -1,7 +1,7 @@
 use http::method::Method;
 use collections::hashmap::HashMap;
-use std::cell::Ref;
 use route::Router;
+use sync::Arc;
 
 #[allow(uppercase_variables)]
 pub struct Request<'a> {
@@ -9,12 +9,13 @@ pub struct Request<'a> {
     pub uri: ~str,
     pub GET : Option<HashMap<~str, ~str>>,
     pub POST : Option<HashMap<~str, ~str>>,
-    pub context : Option<HashMap<~str,~str>>,
-    pub router : Ref<'a, ~Router:Send>,
+    pub user : Option<~str>,
+    // pub context : Option<HashMap<~str,~str>>,
+    pub router : Arc<~Router:Send+Share>,
 }
 
 impl<'a> Request<'a> {
-    pub fn reverse<'a>(&'a self, name: &str, vars: Option<~[(~str,~str)]>) -> Option<~str> {
+    pub fn reverse<'a>(&'a self, name: &str, vars: Option<Vec<(~str,~str)>>) -> Option<~str> {
         self.router.reverse(name, vars)
     }
 }

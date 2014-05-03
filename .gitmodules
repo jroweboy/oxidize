@@ -1,9 +1,9 @@
 [submodule "rust-http"]
 	path = rust-http
 	url = https://github.com/jroweboy/rust-http.git
-[submodule "example/hello_world/rust-mustache"]
-	path = example/hello_world/rust-mustache
-	url = git@github.com:jroweboy/rust-mustache.git
+[submodule "example/hello_world_old/rust-mustache"]
+	path = example/hello_world_old/rust-mustache
+	url = https://github.com/jroweboy/rust-mustache.git
 [submodule "example/benchmarks/rust-postgres"]
 	path = example/benchmarks/rust-postgres
 	url = https://github.com/jroweboy/rust-postgres

@@ -7,8 +7,8 @@ use request::Request;
 use http::server::ResponseWriter;
 use std::vec::Vec;
 
-trait MiddleWare:Send+Share {
-    fn apply(&self, &mut Request, &mut Response);
+pub trait MiddleWare:Send+Share {
+    fn apply(&self, &mut Request, &mut ResponseWriter);
     fn copy(&self) -> ~MiddleWare:Send+Share;
 }
 
