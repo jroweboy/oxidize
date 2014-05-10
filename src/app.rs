@@ -18,5 +18,5 @@ pub trait App:Send+Share {
     /// a static function that will create a list of the routes and prepare a 
     /// router for the application to use. By handling the routes in this manner,
     /// it should be fairly simple to one day support pluggable applications
-    fn get_router() -> ~Router:Send+Share;
+    fn get_router() -> Box<Router:Send+Share>;
 }

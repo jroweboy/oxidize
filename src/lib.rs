@@ -21,12 +21,30 @@ extern crate time;
 extern crate collections;
 extern crate sync;
 
+
+pub use app::App;
+pub use conf::Config;
+pub use http::status;
+pub use request::Request;
+pub use middleware::MiddleWare;
+pub use http::server::ResponseWriter;
+pub use http::headers::content_type::MediaType;
+pub use oxidize::Oxidize;
+
 pub mod oxidize;
 pub mod app;
 pub mod route;
 pub mod request;
 pub mod conf;
 pub mod middleware;
+
+// pub use app::App;
+// pub use config::Config;
+// pub use oxidize::Oxidize;
+// pub use request::Request;
+// pub use http::server::ResponseWriter;
+// pub use http::headers::content_type::MediaType;
+
 
 // --- HERE BE MACROS ---
 
@@ -36,7 +54,7 @@ the required traits for oxidize. It will also automatically attempt to bind any
 variables passed by the url and call the method with the name provided.
 
 ```
-routes!( Trierouter,
+routes!(AppName Trierouter,
     ("GET", "/", "index", self.index),
     ("GET", "/test", "test_mustache", self.test_mustache),
     ("GET", "/users/user-<userid:uint>/post-<postid:uint>", "test_variable", self.test_variable),
@@ -45,27 +63,27 @@ routes!( Trierouter,
 */
 
 // Ugh, it looks like I'll need to change to the more complicated macro_registar instead
-#[macro_export]
-macro_rules! routes(
-    ($app_name:ident, $router_name:ident, $(($method:expr, $path:expr, $name:expr, $func:expr)),+) => (
-    impl App for $app_name {
-        fn handle_route(&self, info: RouteInfo, req: &mut Request, res: &mut ResponseWriter){
-            match (info.name, info.method) {
-                $(($name, $method) => {$func(req, res)}, )+ 
-            }
-        }
+// #[macro_export]
+// macro_rules! routes(
+//     ($app_name:ident, $router_name:ident, $(($method:expr, $path:expr, $name:expr, $func:expr)),+) => (
+//     impl App for $app_name {
+//         fn handle_route(&self, info: RouteInfo, req: &mut Request, res: &mut ResponseWriter){
+//             match (info.name, info.method) {
+//                 $(($name, $method) => {$func(req, res)}, )+ 
+//             }
+//         }
 
-        fn get_router() -> ~Router:Send+Share {
-            let router = ~$router_name::new();
-            let routes = vec!( $(($method, $path, $name)),+);
-            for (m, p, n) in routes {
-                router.add_route(m, p, n);
-            }
-            router as ~Router:Send+Share
-        }
-    }
-    )
-)
+//         fn get_router() -> ~Router:Send+Share {
+//             let router = ~$router_name::new();
+//             let routes = vec!( $(($method, $path, $name)),+);
+//             for (m, p, n) in routes {
+//                 router.add_route(m, p, n);
+//             }
+//             router as ~Router:Send+Share
+//         }
+//     }
+//     )
+// )
 
 /**
 A macro for assigning content types. This macro was written by Ogeon for rustful 

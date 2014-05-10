@@ -9,11 +9,11 @@ use std::vec::Vec;
 
 pub trait MiddleWare:Send+Share {
     fn apply(&self, &mut Request, &mut ResponseWriter);
-    fn copy(&self) -> ~MiddleWare:Send+Share;
+    fn copy(&self) -> Box<MiddleWare:Send+Share>;
 }
 
-impl Clone for ~MiddleWare:Send+Share {
-    fn clone(&self) -> ~MiddleWare:Send+Share {
+impl Clone for Box<MiddleWare:Send+Share> {
+    fn clone(&self) -> Box<MiddleWare:Send+Share> {
         self.copy()
     }
 }

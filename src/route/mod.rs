@@ -11,11 +11,11 @@ pub trait Router:Send+Share {
     fn add_route(&self, method: &'static str, url: &'static str, name: &'static str);
     fn route<'a>(&self, method: &'a str, url: &'a str) -> RouteInfo<'a>;
     fn reverse<'a>(&'a self, name: &str, vars: Option<Vec<(~str,~str)>>) -> Option<~str>;
-    fn copy(&self) -> ~Router:Send+Share;
+    fn copy(&self) -> Box<Router:Send+Share>;
 }
 
-impl Clone for ~Router:Send+Share {
-    fn clone(&self) -> ~Router:Send+Share {
+impl Clone for Box<Router:Send+Share> {
+    fn clone(&self) -> Box<Router:Send+Share> {
         self.copy()
     }
 }

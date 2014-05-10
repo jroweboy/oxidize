@@ -6,14 +6,13 @@
 //! This struct can be considered the "brain" of oxidize and it controls all the different 
 //! parts which are all self contained (and tested TODO)
 
-pub use app::App;
-pub use conf::Config;
-pub use http::status;
-pub use request::Request;
-pub use middleware::MiddleWare;
-pub use http::server::ResponseWriter;
-// TODO Ogeon wrote a wonderful MediaType macro that I would love to incorporate
-pub use http::headers::content_type::MediaType;
+use app::App;
+use conf::Config;
+use http::status;
+use request::Request;
+use middleware::MiddleWare;
+use http::server::ResponseWriter;
+use http::headers::content_type::MediaType;
 
 use route::Router;
 use request;
@@ -29,18 +28,19 @@ use time;
 /// the router Trait. In addition, MiddleWare can be added that will be able to mutate
 /// both request and response 
 #[deriving(Clone)]
-struct Oxidize {
+pub struct Oxidize {
     pub conf : Arc<Config>,
-    pub router : Arc<~Router:Send+Share>,
-    pub app : Arc<~App:Send+Share>,
-    pub filters : Option<Arc<RWLock<Vec<~MiddleWare:Send+Share>>>>,
+    pub router : Arc<Box<Router:Send+Share>>,
+    pub app : Arc<Box<App:Send+Share>>,
+    // obviously my favorite type in th whole program.
+    pub filters : Option<Arc<RWLock<Vec<Box<MiddleWare:Send+Share>>>>>,
 }
 
 impl Oxidize {
     /// A simple constructor for the framework user so they don't have to worry about
     /// which concurrency primitives I use (aka ignore the implementation details)
-    pub fn new(conf: Config, router: ~Router:Send+Share, 
-                app: ~App:Send+Share, filters: Option<Vec<~MiddleWare:Send+Share>>) -> Oxidize {
+    pub fn new(conf: Config, router: Box<Router:Send+Share>, 
+                app: Box<App:Send+Share>, filters: Option<Vec<Box<MiddleWare:Send+Share>>>) -> Oxidize {
         if filters.is_some() {
             Oxidize {
                 conf: Arc::new(conf),
@@ -86,7 +86,7 @@ impl Server for Oxidize {
             AbsolutePath(ref i) => i.to_str(),
             AbsoluteUri(ref i) => i.to_str(),
             Authority(ref i) => i.to_str(),
-            Star => ~"error"
+            Star => "error".to_owned()
         };
         // TODO support any kind of method
         let test_method = match from_str("GET") {

@@ -5,16 +5,39 @@ extern crate oxidize;
 extern crate oxidize;
 extern crate sync;
 
-use oxidize::route::MatchRouter;
+use oxidize::route::matchrouter::MatchRouter;
 use oxidize::{App, Config, Oxidize, Request, ResponseWriter, MediaType};
 use oxidize::status;
 
-routes!{HelloWorld, MatchRouter,
-    ("GET", "/", "index", self.index)
-}
+// One of my goals is to make a macro that takes this and impls App for MyApp like below
+// routes!{HelloWorld, MatchRouter,
+//     ("GET", "/", "index", self.index)
+//     ("GET", "/mustache", "mustache", self.test_mustache),
+//     ("GET", "/users/user-<userid:uint>/post-<postid:uint>", "test_variable", self.test_variable),
+// }
 
-    // ("GET", "/test", "test_mustache", self.test_mustache),
-    // ("GET", "/users/user-<userid:uint>/post-<postid:uint>", "test_variable", self.test_variable),
+impl App for HelloWorld {
+    fn handle_route(&self, info: RouteInfo, req: &mut Request, res: &mut ResponseWriter){
+        match (info.name, info.method) {
+            ("/", "GET") => { 
+                self.index(req, res); 
+            }
+            ("/mustache", "GET") => { 
+                res.write_content_auto(
+                    content_type!("text", "html"), 
+                    "Hello mustache! TODO fix me to actually call the mustache method"
+                ); 
+            }
+            _ => { unreachable!(); }
+        }
+    }
+    fn get_router() -> Box<Router:Send+Share> {
+        let m = box MatchRouter::new();
+        m.add_route("GET", "index", "/");
+        m.add_route("GET", "mustache", "/mustache");
+        m
+    }
+}
 
 
 struct HelloWorld {

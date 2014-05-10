@@ -11,7 +11,7 @@ pub struct Request<'a> {
     pub POST : Option<HashMap<~str, ~str>>,
     pub user : Option<~str>,
     // pub context : Option<HashMap<~str,~str>>,
-    pub router : Arc<~Router:Send+Share>,
+    pub router : Arc<Box<Router:Send+Share>>,
 }
 
 impl<'a> Request<'a> {

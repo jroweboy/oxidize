@@ -38,9 +38,9 @@ impl Router for MatchRouter {
         unreachable!();
     }
     
-    fn copy(&self) -> ~Router:Send+Share {
-        ~MatchRouter {
+    fn copy(&self) -> Box<Router:Send+Share> {
+        box MatchRouter {
             routes: self.routes.clone(),
-        } as ~Router:Send+Share
+        } as Box<Router:Send+Share>
     }
 }
