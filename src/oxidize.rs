@@ -8,13 +8,10 @@
 
 use app::App;
 use conf::Config;
-use http::status;
 use request::Request;
 use middleware::MiddleWare;
-use http::server::ResponseWriter;
-use http::headers::content_type::MediaType;
 
-use route::Router;
+use router::Router;
 use request;
 
 use http;
@@ -24,38 +21,27 @@ use sync::{Arc, RWLock};
 use time;
 
 /// The Oxidize struct contains a handler to all of the major aspects of the framework
-/// As such, the user is free to use whatever router they desire as long as it implements
-/// the router Trait. In addition, MiddleWare can be added that will be able to mutate
-/// both request and response 
+/// MiddleWare can be added that will be able to mutate both request and response 
 #[deriving(Clone)]
 pub struct Oxidize {
-    pub conf : Arc<Config>,
-    pub router : Arc<Box<Router:Send+Share>>,
-    pub app : Arc<Box<App:Send+Share>>,
-    // obviously my favorite type in th whole program.
-    pub filters : Option<Arc<RWLock<Vec<Box<MiddleWare:Send+Share>>>>>,
+    conf : Arc<Config>,
+    router : Arc<Router<&'static str>>,
+    app : Arc<Box<App:Send+Share>>,
+    // obviously my favorite type in the whole program. maybe worth a typedef...
+    filters : Option<Arc<RWLock<Vec<Box<MiddleWare:Send+Share>>>>>,
 }
 
 impl Oxidize {
-    /// A simple constructor for the framework user so they don't have to worry about
-    /// which concurrency primitives I use (aka ignore the implementation details)
-    pub fn new(conf: Config, router: Box<Router:Send+Share>, 
-                app: Box<App:Send+Share>, filters: Option<Vec<Box<MiddleWare:Send+Share>>>) -> Oxidize {
-        if filters.is_some() {
-            Oxidize {
-                conf: Arc::new(conf),
-                router: Arc::new(router),
-                app: Arc::new(app),
-                filters: Some(Arc::new(RWLock::new(filters.unwrap()))),
-            }
-        } else {
-
-            Oxidize {
-                conf: Arc::new(conf),
-                router: Arc::new(router),
-                app: Arc::new(app),
-                filters: None,
-            }
+    /// Creates a new Oxidize which contains the main guts of the web application
+    pub fn new(conf: Config, app: Box<App:Send+Share>, filters: Option<Vec<Box<MiddleWare:Send+Share>>>) -> Oxidize {
+    
+        Oxidize {
+            conf: Arc::new(conf),
+            router: Arc::new(app.get_router()),
+            app: Arc::new(app),
+            filters: filters.map(|f| {
+                Arc::new(RWLock::new(f))
+            }),
         }
     }
 
@@ -103,7 +89,7 @@ impl Server for Oxidize {
             GET: None,
             POST: None,
             user: None,
-            router: self.router.clone(),
+            // router: self.router.clone(),
         };
 
         response.headers.date = Some(time::now_utc());
@@ -113,7 +99,14 @@ impl Server for Oxidize {
         // write to a response if needed and if the framework user calls ResponseWriter.write
         // it will close the stream and cause the middleware to fail.
         // TODO: GET isn't the only kind of method we will use
-        let route_info = self.router.route("GET", uri);
-        self.app.handle_route(route_info, my_request, response)
+        // TODO: Do we want to just hand the RouterResult straight to the app?
+        let route_info = self.router.find(http::method::Get, uri);
+        if route_info.is_some() {
+            let (name, vars) = route_info.unwrap();
+            self.app.handle_route(Some(name), Some(vars), my_request, response);
+        } else {
+            // 404
+            self.app.handle_route(None, None, my_request, response);
+        }
     }
 }

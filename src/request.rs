@@ -1,21 +1,18 @@
+//! A Request is a struct that is passed through the middleware (TODO on that part) 
+//! and will contain data about the HTTP Request. It will be passed through the 
+//! middleware as mutable so as to allow them to change things about the request, 
+//! but there probably isn't a good reason to change the request in your controller method
+
 use http::method::Method;
 use collections::hashmap::HashMap;
-use route::Router;
-use sync::Arc;
 
-#[allow(uppercase_variables)]
+#[allow(uppercase_variables, missing_doc)]
 pub struct Request<'a> {
     pub method : Method,
     pub uri: ~str,
     pub GET : Option<HashMap<~str, ~str>>,
     pub POST : Option<HashMap<~str, ~str>>,
+    /// Not in use currently, but I plan on changing this to allow an authentication 
+    /// middleware to attach a struct to represent a User
     pub user : Option<~str>,
-    // pub context : Option<HashMap<~str,~str>>,
-    pub router : Arc<Box<Router:Send+Share>>,
-}
-
-impl<'a> Request<'a> {
-    pub fn reverse<'a>(&'a self, name: &str, vars: Option<Vec<(~str,~str)>>) -> Option<~str> {
-        self.router.reverse(name, vars)
-    }
 }

@@ -5,8 +5,9 @@
 
 use request::Request;
 use http::server::ResponseWriter;
-use std::vec::Vec;
 
+// Not documented since this will LIKELY radically change in the near future
+#[allow(missing_doc)]
 pub trait MiddleWare:Send+Share {
     fn apply(&self, &mut Request, &mut ResponseWriter);
     fn copy(&self) -> Box<MiddleWare:Send+Share>;

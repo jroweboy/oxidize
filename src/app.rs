@@ -7,16 +7,36 @@
 
 use request::Request;
 use http::server::ResponseWriter;
-use route::{Router, RouteInfo};
+use http::status;
+use collections::hashmap::HashMap;
+use router::Router;
 
+/// In order for your application to receive the request and response data from Oxidize
+/// it needs to fulfill the following trait. This defines a simple method for enabling
+/// modular applications (at least I hope) and also communication to/from oxidize
 pub trait App:Send+Share {
     /// receive a string that indicates which route to call and also any of the
     /// parsed url parameters. This function should bind these parameters 
     /// to variables and pass them to the requested user function (TODO)
-    fn handle_route(&self, info: RouteInfo, &mut Request, &mut ResponseWriter);
+    fn handle_route(&self, Option<&&'static str>, Option<HashMap<~str,~str>>, &mut Request, &mut ResponseWriter);
 
     /// a static function that will create a list of the routes and prepare a 
     /// router for the application to use. By handling the routes in this manner,
     /// it should be fairly simple to one day support pluggable applications
-    fn get_router() -> Box<Router:Send+Share>;
+    fn get_router(&self) -> Router<&'static str>;
+
+    /// The user can override this method with a custom 404 function
+    /// ... at least that is the idea. I have no clue if it will work in practice
+    #[allow(unused_variable,unused_must_use)]
+    fn default_404(&self, req: &mut Request, res: &mut ResponseWriter) {
+        res.status = status::NotFound;
+        res.write_content_auto(
+            ::http::headers::content_type::MediaType {
+                type_: StrBuf::from_str("text"),
+                subtype: StrBuf::from_str("html"),
+                parameters: Vec::new()
+            }, 
+            StrBuf::from_str("<h1>404 - Not Found</h1>")
+        ); 
+    }
 }

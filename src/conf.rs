@@ -8,6 +8,9 @@ use std::io::net::ip::SocketAddr;
 /// `debug` - At some point, I hope to use this to switch error handling to provide
 /// useful error handling to the developer and then hiding details from a client
 pub struct Config {
+    /// Currently does nothing, but I want it to eventually switch whether errors are rendered
+    /// to the page or whether it should send an email to the web master
     pub debug : bool,
+    /// 
     pub bind_addr : SocketAddr,
 }
