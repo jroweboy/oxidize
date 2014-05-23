@@ -56,6 +56,9 @@ pub mod middleware;
 
 // --- HERE BE MACROS ---
 
+// Currently, the macros DON'T handle strings very well, but the Router does, so 
+// I need to update this to enable anything to be passed to the macro instead
+
 /*
 The routes macro provides a convenient way to define the routes and implementing 
 the required traits for oxidize. It will also automatically attempt to bind any

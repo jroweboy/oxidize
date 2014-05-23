@@ -1,4 +1,5 @@
 // TODO: Maybe call this session? And handle any user session stuff in here?
+// Do we even WANT a builtin Auth middleware?
 
 // pub struct User {
 //   id : uint,
