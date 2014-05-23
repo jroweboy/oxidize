@@ -1,3 +1,5 @@
+extern crate url;
+
 use http::method::Method;
 use collections::hashmap::HashMap;
 use std::cell::Ref;
@@ -6,7 +8,7 @@ use route::Router;
 #[allow(uppercase_variables)]
 pub struct Request<'a> {
     pub method : Method,
-    pub uri: ~str,
+    pub uri: ~url::Url,
     pub GET : Option<HashMap<~str, ~str>>,
     pub POST : Option<HashMap<~str, ~str>>,
     pub context : Option<HashMap<~str,~str>>,

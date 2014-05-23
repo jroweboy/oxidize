@@ -15,6 +15,8 @@ extern crate serialize;
 extern crate http;
 // used for holding the pcre struct in a mutable multithreaded way
 extern crate sync;
+//user for initializeing the url
+extern crate url;
 
 // It turns out its real easy to reexport mods :D
 // People that extern mod oxidize can use oxidize::reexported::mod;
@@ -78,9 +80,33 @@ impl Server for Oxidize {
             Some(m) => m,
             None => http::method::Get
         };
+        // This tries to convert the path to a Url struct
+        let url: url::Url = match url::from_str(path) {
+            Ok(m) => m,
+            Err(partial_url) => {
+                //Partial paths are not supported yet, see
+                //https://github.com/mozilla/rust/issues/10706
+                let new_path = ~"http://127.0.0.1" + path;
+                println!("Was {}, now is {}", path, new_path);
+                match url::from_str(new_path) {
+                    Ok(n) => n,
+                    Err(bad_url) => {
+                        info!("Bad or Partial Url found: {}", bad_url);
+                        url::Url {  
+                            scheme: ~"",
+                            user: None,
+                            host: ~"",
+                            port: None,
+                            path: ~"",
+                            query: Vec::new(),
+                            fragment: None }
+                    }
+                }
+            }
+        };
         let my_request = &mut request::Request {
             method: test_method, 
-            uri: path,
+            uri: ~url.clone(),
             GET : None,
             POST : None,
             context : None,
