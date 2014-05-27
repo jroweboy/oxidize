@@ -1,4 +1,4 @@
-![logo](https://raw.github.com/jroweboy/oxidize/master/oxidize_logo_smaller.png)
+![oxidize logo](https://raw.github.com/jroweboy/oxidize/master/oxidize_logo_smaller.png)
 
 A basic web framework for Rust. Subject to be redesigned when issues arise (and when Rust updates)
 

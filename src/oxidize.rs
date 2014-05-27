@@ -12,13 +12,14 @@ use request::Request;
 use middleware::MiddleWare;
 
 use router::Router;
-use request;
 
 use http;
-use http::server::{Server, ResponseWriter}; 
-use http::server::request::{Star, AbsoluteUri, AbsolutePath, Authority};
+use http::server::{Server, ResponseWriter};
 use sync::{Arc, RWLock};
 use time;
+
+
+static version : &'static str = "Oxidize/0.2.0 (Ubuntu)";
 
 /// The Oxidize struct contains a handler to all of the major aspects of the framework
 /// MiddleWare can be added that will be able to mutate both request and response 
@@ -29,6 +30,7 @@ pub struct Oxidize {
     app : Arc<Box<App:Send+Share>>,
     // obviously my favorite type in the whole program. maybe worth a typedef...
     filters : Option<Arc<RWLock<Vec<Box<MiddleWare:Send+Share>>>>>,
+    server_version : Arc<Option<StrBuf>>,
 }
 
 impl Oxidize {
@@ -42,6 +44,7 @@ impl Oxidize {
             filters: filters.map(|f| {
                 Arc::new(RWLock::new(f))
             }),
+            server_version : Arc::new(Some(StrBuf::from_str(version))),
         }
     }
 
@@ -51,7 +54,6 @@ impl Oxidize {
         debug!("Server is now running at {}", self.conf.bind_addr.to_str());
         self.serve_forever();
     }
-
 }
 
 impl Server for Oxidize {
@@ -68,45 +70,68 @@ impl Server for Oxidize {
     /// and pass the app context and a request and response to the user.
     fn handle_request(&self, req: &http::server::Request, response: &mut ResponseWriter) {
         // create a request object
-        let path = match req.request_uri {
-            AbsolutePath(ref i) => i.to_str(),
-            AbsoluteUri(ref i) => i.to_str(),
-            Authority(ref i) => i.to_str(),
-            Star => "error".to_owned()
-        };
-        // TODO support any kind of method
-        let test_method = match from_str("GET") {
-            Some(m) => m,
-            None => http::method::Get
-        };
-
-        let uri = path.clone();
-        // TODO add any GET POST vars here as well
-        // TODO standardize any usages of uri/url (first pick one and stick with it)
-        let my_request = &mut request::Request {
-            method: test_method, 
-            uri: path,
-            GET: None,
-            POST: None,
-            user: None,
-            // router: self.router.clone(),
-        };
+        let mut my_request = Request::new(req);
 
         response.headers.date = Some(time::now_utc());
-        // TODO, store the StrBuf in oxidize so it doesn't get remade each time
-        response.headers.server = Some(StrBuf::from_str("Oxidize/0.2.0 (Ubuntu)"));
+        // TODO: find a way to remove this clone?
+        response.headers.server = self.server_version.deref().clone();
         // TODO: hide the response writer since we still want middle ware to be able to
         // write to a response if needed and if the framework user calls ResponseWriter.write
         // it will close the stream and cause the middleware to fail.
         // TODO: GET isn't the only kind of method we will use
         // TODO: Do we want to just hand the RouterResult straight to the app?
-        let route_info = self.router.find(http::method::Get, uri);
+        let route_info = self.router.find(my_request.method.clone(), my_request.uri.to_str());
         if route_info.is_some() {
             let (name, vars) = route_info.unwrap();
-            self.app.handle_route(Some(name), Some(vars), my_request, response);
+            self.app.handle_route(Some(name), Some(vars), &mut my_request, response);
         } else {
             // 404
-            self.app.handle_route(None, None, my_request, response);
+            self.app.handle_route(None, None, &mut my_request, response);
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use collections::hashmap::HashMap;
+    #[allow(unused_imports)]
+    use http::method::{Get, Post, Delete, Put, Head};
+    use super::Oxidize;
+    use std::io::net::ip::SocketAddr;
+
+    struct TestApp;
+    impl ::app::App for TestApp {
+        #[allow(unused_variable)]
+        fn handle_route<'a>(&self, route: Option<&&'static str>, vars: Option<HashMap<~str,~str>>,
+                         req: &mut ::request::Request, res: &mut ::http::server::ResponseWriter) {
+            // Do nothing. Lets just say it doesn't fail for testing purposes right now.
+            // Eventually I'll want to make a separate App that fails on handle route 
+            // to test how oxidize handles task failure.
+        }
+
+        fn get_router(&self) -> ::router::Router<&'static str> {
+            // TODO once oxidize supports things other than GET requests, I'll want to add them in as test cases here
+            let routes = [
+                (Get, "/", "index"),
+            ];
+            ::router::Router::from_routes(routes)
+        }
+    }
+
+    fn test_setup() -> Oxidize {
+        let app = box TestApp;
+        let conf = ::conf::Config {
+            debug: true,
+            bind_addr: from_str::<SocketAddr>("127.0.0.1:8001").unwrap(),
+        };
+        Oxidize::new(conf, app as Box<::app::App:Send+Share>, None)
+    }
+
+    #[test]
+    fn handle_request() {
+        // This is frustrating! It won't let me call the Server methods on Oxidize... 
+        // I'll have to figure out a better way to internal test this code
+        let o = test_setup();
+        assert!(o.get_config().debug == true);
     }
 }

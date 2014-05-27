@@ -1,4 +1,5 @@
-//! oxidize is a practical and extensible web framework written in rust. The main goal
+//! Oxidize is a practical and extensible web framework written in rust. The main goal
+//! of oxidize is to provide enough boiler plate without getting in the way
 #![crate_id = "oxidize#0.2-pre"]
 
 #![comment = "Rust Web Framework"]
@@ -23,7 +24,8 @@ extern crate time;
 extern crate collections;
 extern crate sync;
 extern crate syntax;
-
+extern crate test;
+extern crate url;
 
 use syntax::{ast, codemap};
 use syntax::ext::base::{

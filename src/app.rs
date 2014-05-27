@@ -15,14 +15,14 @@ use router::Router;
 /// it needs to fulfill the following trait. This defines a simple method for enabling
 /// modular applications (at least I hope) and also communication to/from oxidize
 pub trait App:Send+Share {
-    /// receive a string that indicates which route to call and also any of the
+    /// Receive a `&&static str` that indicates which route to call and also any of the
     /// parsed url parameters. This function should bind these parameters 
-    /// to variables and pass them to the requested user function (TODO)
+    /// to variables and pass them to the requested user function (TODO make the macro for this)
     fn handle_route(&self, Option<&&'static str>, Option<HashMap<~str,~str>>, &mut Request, &mut ResponseWriter);
 
-    /// a static function that will create a list of the routes and prepare a 
+    /// Create a list of the routes and prepare a 
     /// router for the application to use. By handling the routes in this manner,
-    /// it should be fairly simple to one day support pluggable applications
+    /// it should be fairly simple to one day support pluggable applications 
     fn get_router(&self) -> Router<&'static str>;
 
     /// The user can override this method with a custom 404 function
