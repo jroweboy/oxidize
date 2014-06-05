@@ -83,4 +83,18 @@ impl Response {
             ),
         }
     }
+    /// Create a new response with the status 404 Not Found
+    pub fn bad_request(body: String, content_type: Option<MediaType>) -> Response {
+        Response {
+            content: body,
+            status: status::BadRequest,
+            content_type: content_type.unwrap_or(
+                MediaType {
+                    type_: "text".to_string(),
+                    subtype: "html".to_string(),
+                    parameters: Vec::new(),
+                }
+            ),
+        }
+    }
 }
