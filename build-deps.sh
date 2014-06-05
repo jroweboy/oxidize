@@ -1,5 +1,5 @@
 #!/bin/sh
-readonly RUST_VERSION = `rustc --version | awk "/host:/ { print \\$2 }"`
+RUST_VERSION = `rustc --version | awk "/host:/ { print \\$2 }"`
 ##
 # I want to make this pull either the dependencies for Mongrel2 or rusthttp depending on what
 # you want. Till then though, I think its easier to pull both :p
