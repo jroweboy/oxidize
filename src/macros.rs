@@ -144,7 +144,7 @@ fn expand_router(cx: &mut ExtCtxt, sp: codemap::Span, tts: &[ast::TokenTree]) ->
         ast::ItemImpl(_, _, _, ref methods) => methods,
         _ => unreachable!()
     };
-    methods.push(
+    //methods.push(
     MacItem::new(impl_item)
 }
 
