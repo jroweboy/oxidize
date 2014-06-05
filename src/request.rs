@@ -3,10 +3,8 @@
 //! middleware as mutable so as to allow them to change things about the request, 
 //! but there probably isn't a good reason to change the request in your controller method
 
-use http::method::Method;
+use common::method::Method;
 use collections::hashmap::HashMap;
-use http::server::request::{AbsolutePath, AbsoluteUri, Authority, Star};
-use url::Url;
 
 #[allow(uppercase_variables)]
 /// One of the goals of the Request struct is to contain any and all relevent information 
@@ -15,15 +13,15 @@ pub struct Request {
     /// CONNECT POST GET etc as defined by rust-http
     pub method : Method,
     /// The request URL as a string. TODO: should this be a url::Url instead?
-    pub uri: StrBuf,
+    pub uri: String,
     /// A HashMap of query params in Key Value pairing. 
     /// ex: ?foo=bar&baz=qux the hashmap now has foo => bar, baz => qux
-    pub GET : Option<HashMap<StrBuf, StrBuf>>,
+    pub GET : Option<HashMap<String, String>>,
     /// Currently None, but meant to provide the same details that GET provides
-    pub POST : Option<HashMap<StrBuf, StrBuf>>,
+    pub POST : Option<HashMap<String, String>>,
     /// Not in use currently, but I plan on changing this to allow an authentication 
     /// middleware to attach a struct to represent a User
-    pub user : Option<StrBuf>,
+    pub user : Option<String>,
 }
 
 // fn parse_vars(vars: &str) -> HashMap<~str, ~str> {
@@ -35,38 +33,38 @@ pub struct Request {
 //     return map;
 // }
 
-impl Request {
-    /// Creates the oxidize specific Request struct from the underlying http libraries request.
-    /// The goal is to provide a request struct that provides convenient access to common things
-    /// like get and post, while still retaining all the gory HTTP details.
-    pub fn new(req: &::http::server::Request) -> Request {
-        let path = match req.request_uri {
-            AbsolutePath(ref i) => from_str::<Url>(i.to_str()).unwrap(),
-            AbsoluteUri(ref i) => i.clone(),
-            Authority(ref i) => from_str::<Url>(i.to_str()).unwrap(),
-            Star => fail!("Star option is not supported yet")
-        };
-        // Add get params to the request
-        let mut option_get = None;
-        if path.query.len() > 0 {
-            let mut get = HashMap::new();
-            for q in path.query.iter() {
-                let (ref a, ref b) = *q;
-                get.insert(a.clone(), b.clone());
-            }
-            option_get = Some(get);
-        }
+// impl Request {
+    // / Creates the oxidize specific Request struct from the underlying http libraries request.
+    // / The goal is to provide a request struct that provides convenient access to common things
+    // / like get and post, while still retaining all the gory HTTP details.
+    // pub fn rusthttp_request(req: &::http::server::Request) -> Request {
+    //     let path = match req.request_uri {
+    //         AbsolutePath(ref i) => from_str::<Url>(i.to_str()).unwrap(),
+    //         AbsoluteUri(ref i) => i.clone(),
+    //         Authority(ref i) => from_str::<Url>(i.to_str()).unwrap(),
+    //         Star => fail!("Star option is not supported yet")
+    //     };
+    //     // Add get params to the request
+    //     let mut option_get = None;
+    //     if path.query.len() > 0 {
+    //         let mut get = HashMap::new();
+    //         for q in path.query.iter() {
+    //             let (ref a, ref b) = *q;
+    //             get.insert(a.clone(), b.clone());
+    //         }
+    //         option_get = Some(get);
+    //     }
 
-        // TODO add post params
-        Request {
-            method: req.method.clone(),
-            uri: path.to_str().to_strbuf(),
-            GET: option_get,
-            POST: None,
-            user: None
-        }
-    }
-}
+    //     // TODO add post params
+    //     Request {
+    //         method: req.method.clone(),
+    //         uri: path.to_str().to_strbuf(),
+    //         GET: option_get,
+    //         POST: None,
+    //         user: None
+    //     }
+    // }
+// }
 
 /* What follows is most of Go's net/http module's definition of Request.
 Its got some really good ideas of what my struct should end up looking like (That or maybe teepee will make it this way)

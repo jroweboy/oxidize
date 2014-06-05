@@ -6,8 +6,9 @@
 //! have to worry about the specific details. (TODO)
 
 use request::Request;
-use http::server::ResponseWriter;
-use http::status;
+use response::Response;
+// use http::server::ResponseWriter;
+// use http::status;
 use collections::hashmap::HashMap;
 use router::Router;
 
@@ -18,7 +19,7 @@ pub trait App:Send+Share {
     /// Receive a `&&static str` that indicates which route to call and also any of the
     /// parsed url parameters. This function should bind these parameters 
     /// to variables and pass them to the requested user function (TODO make the macro for this)
-    fn handle_route(&self, Option<&&'static str>, Option<HashMap<~str,~str>>, &mut Request, &mut ResponseWriter);
+    fn handle_route(&self, Option<&&'static str>, Option<HashMap<String,String>>, &mut Request) -> Response;
 
     /// Create a list of the routes and prepare a 
     /// router for the application to use. By handling the routes in this manner,
@@ -28,15 +29,16 @@ pub trait App:Send+Share {
     /// The user can override this method with a custom 404 function
     /// ... at least that is the idea. I have no clue if it will work in practice
     #[allow(unused_variable,unused_must_use)]
-    fn default_404(&self, req: &mut Request, res: &mut ResponseWriter) {
-        res.status = status::NotFound;
-        res.write_content_auto(
-            ::http::headers::content_type::MediaType {
-                type_: StrBuf::from_str("text"),
-                subtype: StrBuf::from_str("html"),
-                parameters: Vec::new()
-            }, 
-            StrBuf::from_str("<h1>404 - Not Found</h1>")
-        ); 
+    fn default_404(&self, req: &mut Request) -> Response {
+        Response::not_found("<h1>404 - Not Found</h1>".to_string(), None)
+        // res.status = status::NotFound;
+        // res.write_content_auto(
+        //     ::http::headers::content_type::MediaType {
+        //         type_: StrBuf::from_str("text"),
+        //         subtype: StrBuf::from_str("html"),
+        //         parameters: Vec::new()
+        //     }, 
+        //     StrBuf::from_str("<h1>404 - Not Found</h1>")
+        // ); 
     }
 }

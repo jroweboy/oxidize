@@ -28,15 +28,15 @@ SHELL := /bin/bash
 # Change this to 'lib' if you are building a library.
 DEFAULT = help
 
-EXAMPLE_FILES = examples/*.rs
+EXAMPLE_FILES = examples/hello_world/src/hello.rs
 SOURCE_FILES = $(shell test -e src/ && find src -type f)
 
 COMPILER = rustc
 
 # For release:
-  COMPILER_FLAGS = -O
+#  COMPILER_FLAGS = -O
 # For debugging:
-# COMPILER_FLAGS = -g
+ COMPILER_FLAGS = -g
 
 RUSTDOC = rustdoc
 
@@ -56,6 +56,10 @@ RLIB = target/$(TARGET)/lib/$(RLIB_FILE)
 DYLIB_FILE = $(shell (rustc --crate-type=dylib --crate-file-name "src/lib.rs" 2> /dev/null) || (echo "dummy.dylib"))
 DYLIB = target/$(TARGET)/lib/$(DYLIB_FILE)
 
+MACROS_FILE = $(shell (rustc --crate-type=dylib --crate-file-name "src/macros.rs" 2> /dev/null) || (echo "dummy.dylib"))
+MACROS = target/$(TARGET)/lib/$(MACROS_FILE)
+
+
 # Use 'VERBOSE=1' to echo all commands, for example 'make help VERBOSE=1'.
 ifdef VERBOSE
   Q :=
@@ -72,6 +76,7 @@ help:
 	&& echo "make lib               - Both static and dynamic library" \
 	&& echo "make rlib              - Static library" \
 	&& echo "make dylib             - Dynamic library" \
+	&& echo "make examples          - Builds examples" \
 	&& echo "make test              - Tests library internally and externally" \
 	&& echo "make test-internal     - Tests library internally" \
 	&& echo "make test-external     - Tests library externally" \
@@ -80,7 +85,6 @@ help:
 	&& echo "make bench-external    - Benchmarks library externally" \
 	&& echo "make doc               - Builds documentation for library" \
 	&& echo "make git-ignore        - Setup files to be ignored by Git" \
-	&& echo "make examples          - Builds examples" \
 	&& echo "make cargo-lite-exe    - Setup executable package" \
 	&& echo "make cargo-lite-lib    - Setup library package" \
 	&& echo "make cargo-exe         - EXPERIMENTAL: Setup executable package" \
@@ -94,7 +98,9 @@ help:
 	&& echo "make clean             - Deletes binaries and documentation." \
 	&& echo "make clear-project     - WARNING: Deletes project files except 'Makefile'" \
 	&& echo "make clear-git         - WARNING: Deletes Git setup" \
-	&& echo "make symlink-info      - Symlinked libraries dependency info"
+	&& echo "make symlink-info      - Symlinked libraries dependency info" \
+	&& echo "--- Extra Definitions for oxidize" \
+	&& echo "make macros            - External crate for macros" 
 
 .PHONY: \
 		bench \
@@ -264,7 +270,7 @@ bench-external: test-external
 bench-internal: test-internal
 	$(Q)bin/test-internal --bench
 
-lib: rlib dylib
+lib: rlib dylib macros
 	$(Q)echo "--- Type 'make test' to test library"
 
 rlib: $(RLIB)
@@ -278,6 +284,12 @@ dylib: $(DYLIB)
 $(DYLIB): $(SOURCE_FILES) | src/lib.rs $(TARGET_LIB_DIR)
 	$(Q)$(COMPILER) --target "$(TARGET)" $(COMPILER_FLAGS) --crate-type=dylib src/lib.rs -L "target/$(TARGET)/lib" --out-dir "target/$(TARGET)/lib/" \
 	&& echo "--- Built dylib"
+
+macros: $(MACROS)
+
+$(MACROS): $(SOURCE_FILES) | src/macros.rs $(TARGET_LIB_DIR)
+	$(Q)$(COMPILER) --target "$(TARGET)" $(COMPILER_FLAGS) --crate-type=dylib src/macros.rs -L "target/$(TARGET)/lib" --out-dir "target/$(TARGET)/lib/" \
+	&& echo "--- Built macros"
 
 bin:
 	$(Q)mkdir -p bin
@@ -342,6 +354,7 @@ src/lib.rs: | src/
 clean:
 	$(Q)rm -f "$(RLIB)"
 	$(Q)rm -f "$(DYLIB)"
+	$(Q)rm -f "$(MACROS)"
 	$(Q)rm -rf "doc/"
 	$(Q)rm -f "bin/main"
 	$(Q)rm -f "bin/test-internal"

@@ -31,7 +31,7 @@
 //!```rust
 //!#![feature(phase)]
 //!#[phase(syntax)]
-//!extern crate rustful;
+//!extern crate rustful_macros;
 //!
 //!extern crate rustful;
 //!
@@ -52,70 +52,14 @@
 //!the need to write the same paths multiple times. This can be
 //!useful to lower the risk of typing errors, among other things.
 //!
-//!```rust
-//!#![feature(phase)]
-//!#[phase(syntax)]
-//!extern crate rustful;
-//!
-//!extern crate rustful;
-//!
-//!...
-//!
-//!
-//!let router = router!{
-//! "/" => Get: show_home,
-//! "home" => Get: show_home,
-//! "user/:username" => {Get: show_user, Post: save_user},
-//! "product" => {
-//!     Get: show_all_products,
-//!
-//!     "json" => Get: send_all_product_data
-//!     ":id" => {
-//!         Get: show_product,
-//!         Post | Delete: edit_product,
-//!
-//!         "json" => Get: send_product_data
-//!     }
-//! }
-//!};
-//!```
-//!
-//!There is also a macro for creating a route vector, like the one in the first example:
-//!
-//!```rust
-//!#![feature(phase)]
-//!#[phase(syntax)]
-//!extern crate rustful;
-//!
-//!extern crate rustful;
-//!
-//!...
-//!
-//!
-//!let routes = routes!{
-//! "/" => Get: show_home,
-//! "home" => Get: show_home,
-//! "user/:username" => {Get: show_user, Post: save_user},
-//! "product" => {
-//!     Get: show_all_products,
-//!
-//!     "json" => Get: send_all_product_data
-//!     ":id" => {
-//!         Get: show_product,
-//!         Post | Delete: edit_product,
-//!
-//!         "json" => Get: send_product_data
-//!     }
-//! }
-//!};
-//!
-//!let router = Router::from_routes(routes);
-//!```
+//!There is also a macro for creating a route vector, like the one in the first example.
+//!These can be found in the crate `rustful_macros`.
+
 use collections::hashmap::HashMap;
-use http::method::Method;
+use common::method::Method;
 use std::vec::Vec;
 
-pub type RouterResult<'a, T> = Option<(&'a T, HashMap<~str, ~str>)>;
+pub type RouterResult<'a, T> = Option<(&'a T, HashMap<String, String>)>;
 
 enum Branch {
     Static,
@@ -152,8 +96,8 @@ enum Branch {
 ///```
 #[deriving(Clone)]
 pub struct Router<T> {
-    items: HashMap<~str, (T, Vec<~str>)>,
-    static_routes: HashMap<~str, Router<T>>,
+    items: HashMap<String, (T, Vec<String>)>,
+    static_routes: HashMap<String, Router<T>>,
     variable_route: Option<Box<Router<T>>>,
     wildcard_route: Option<Box<Router<T>>>
 }
@@ -174,14 +118,15 @@ impl<T> Router<T> {
         let path = path_to_vec(path.trim());
 
         if path.len() == 0 {
-            self.items.insert(method.to_str(), (item, Vec::new()));
+            self.items.insert(method.to_str().into_string(), (item, Vec::new()));
         } else {
             let (endpoint, variable_names) = path.move_iter().fold((self, Vec::new()),
 
-                |(current, mut variable_names), piece| {
-                    let next = current.find_or_insert_router(piece);
-                    if piece.len() > 0 && piece.char_at(0) == ':' {
-                        variable_names.push(piece.slice(1, piece.len()).to_owned());
+                |(current, mut variable_names), mut piece| {
+                    let next = current.find_or_insert_router(piece.as_slice());
+                    if piece.len() > 0 && piece.as_slice().char_at(0) == ':' {
+                        piece.shift_char();
+                        variable_names.push(piece);
                     }
 
                     (next, variable_names)
@@ -189,7 +134,7 @@ impl<T> Router<T> {
 
             );
 
-            endpoint.items.insert(method.to_str(), (item, variable_names));
+            endpoint.items.insert(method.to_str().into_string(), (item, variable_names));
         }
     }
 
@@ -206,7 +151,7 @@ impl<T> Router<T> {
             }
             &'a mut **self.variable_route.as_mut::<'a>().unwrap()
         } else {
-            self.static_routes.find_or_insert_with::<'a>(key.to_owned(), |_| {
+            self.static_routes.find_or_insert_with::<'a>(key.to_string(), |_| {
                 Router::new()
             })
         }
@@ -215,9 +160,10 @@ impl<T> Router<T> {
     ///Finds and returns the matching item and variables
     pub fn find<'a>(&'a self, method: Method, path: &str) -> RouterResult<'a, T> {
         let path = path_to_vec(path);
+        let method_str = method.to_str().into_string();
 
         if path.len() == 0 {
-            match self.items.find(&method.to_str()) {
+            match self.items.find(&method_str) {
                 Some(&(ref item, _)) => Some((item, HashMap::new())),
                 None => None
             }
@@ -230,7 +176,7 @@ impl<T> Router<T> {
                 let (current, branch, index) = stack.pop().unwrap();
 
                 if index == path.len() {
-                    match current.items.find(&method.to_str()) {
+                    match current.items.find(&method_str) {
                         Some(&(ref item, ref variable_names)) => {
                             let values = path.move_iter().zip(variables.move_iter()).filter_map(|(v, keep)| {
                                 if keep {
@@ -241,7 +187,7 @@ impl<T> Router<T> {
                             });
 
                             let mut var_map = variable_names.iter().zip(values).map(|(key, value)| {
-                                (key.to_owned(), value)
+                                (key.clone(), value)
                             });
 
                             return Some((item, var_map.collect()))
@@ -309,10 +255,11 @@ impl<T: Clone> Router<T> {
         } else {
             let (endpoint, variable_names) = path.move_iter().fold((self, Vec::new()),
 
-                |(current, mut variable_names), piece| {
-                    let next = current.find_or_insert_router(piece);
-                    if piece.len() > 0 && piece.char_at(0) == ':' {
-                        variable_names.push(piece.slice(1, piece.len()).to_owned());
+                |(current, mut variable_names), mut piece| {
+                    let next = current.find_or_insert_router(piece.as_slice());
+                    if piece.len() > 0 && piece.as_slice().char_at(0) == ':' {
+                        piece.shift_char();
+                        variable_names.push(piece);
                     }
 
                     (next, variable_names)
@@ -325,7 +272,7 @@ impl<T: Clone> Router<T> {
     }
 
     //Mergers this Router with an other Router.
-    fn merge_router(&mut self, variable_names: Vec<~str>, router: &Router<T>) {
+    fn merge_router(&mut self, variable_names: Vec<String>, router: &Router<T>) {
         for (key, &(ref item, ref var_names)) in router.items.iter() {
             let mut new_var_names = variable_names.clone();
             new_var_names.push_all(var_names.as_slice());
@@ -363,19 +310,19 @@ impl<T: Clone> Router<T> {
 }
 
 //Converts a path to a suitable array of path segments
-fn path_to_vec(path: &str) -> Vec<~str> {
+fn path_to_vec(path: &str) -> Vec<String> {
     if path.len() == 0 {
         vec!()
     } else if path.len() == 1 {
         if path == "/" {
             vec!()
         } else {
-            vec!(path.to_owned())
+            vec!(path.to_string())
         }
     } else {
         let start = if path.char_at(0) == '/' { 1 } else { 0 };
         let end = if path.char_at(path.len() - 1) == '/' { 1 } else { 0 };
-        path.slice(start, path.len() - end).split('/').map(|s| s.to_owned()).collect()
+        path.slice(start, path.len() - end).split('/').map(|s| s.to_string()).collect()
     }
 }
 
@@ -388,17 +335,17 @@ mod test {
     use http::method::{Get, Post, Delete, Put, Head};
     use std::vec::Vec;
 
-    fn check_variable(result: Option<(& &'static str, HashMap<~str, ~str>)>, expected: Option<&str>) {
+    fn check_variable(result: Option<(& &'static str, HashMap<String, String>)>, expected: Option<&str>) {
         assert!(match result {
-            Some((_, ref variables)) => match expected {
+            Some((_, mut variables)) => match expected {
                 Some(expected) => {
-                    let keys = vec!("a".to_owned(), "b".to_owned(), "c".to_owned());
-                    let result = keys.iter().filter_map(|key| {
-                        match variables.find(key) {
-                            Some(value) => Some(value.to_owned()),
+                    let keys = vec!("a", "b", "c");
+                    let result = keys.move_iter().filter_map(|key| {
+                        match variables.pop(&key.into_string()) {
+                            Some(value) => Some(value),
                             None => None
                         }
-                    }).collect::<Vec<~str>>().connect(", ");
+                    }).collect::<Vec<String>>().connect(", ");
 
                     expected.to_str() == result
                 },
@@ -408,7 +355,7 @@ mod test {
         });
     }
 
-    fn check(result: Option<(& &'static str, HashMap<~str, ~str>)>, expected: Option<&str>) {
+    fn check(result: Option<(& &'static str, HashMap<String, String>)>, expected: Option<&str>) {
         assert!(match result {
             Some((result, _)) => match expected {
                 Some(expected) => result.to_str() == expected.to_str(),
@@ -665,7 +612,7 @@ mod test {
         let mut counter = 0;
 
         b.iter(|| {
-            router.find(Get, paths[counter].to_owned());
+            router.find(Get, paths[counter]);
             counter = (counter + 1) % paths.len()
         });
     }
@@ -696,7 +643,7 @@ mod test {
         let mut counter = 0;
 
         b.iter(|| {
-            router.find(Get, paths[counter].to_owned());
+            router.find(Get, paths[counter]);
             counter = (counter + 1) % paths.len()
         });
     }

@@ -1,27 +1,24 @@
 #![feature(phase)]
 #[phase(syntax)] 
-extern crate oxidize;
-
-#[phase(syntax)] 
 extern crate log;
+#[phase(syntax)]
+extern crate oxidize_macros;
 
-extern crate collections;
-extern crate http;
 extern crate oxidize;
+extern crate collections;
 extern crate log;
 extern crate sync;
 
-// use oxidize::route::matchrouter::MatchRouter;
-// use oxidize::route::{Router, RouteInfo};
-use collections::hashmap::HashMap;
 use oxidize::router::Router;
-use oxidize::{App, Config, Oxidize, Request, ResponseWriter};
-use oxidize::status;
-use std::io::net::ip::SocketAddr;
+use oxidize::common::{method};
+use oxidize::{App, Config, Oxidize, Request, Response};
+use oxidize::backend::rusthttp::RustHttpBackend;
+use oxidize::backend::OxidizeBackend;
+
+use collections::hashmap::HashMap;
 use std::path::posix::Path;
 use std::io::File;
 use sync::Arc;
-use http::method;
 
 // One of my goals is to make a macro that takes this and impls App for MyApp like below
 // routes!{HelloWorld,
@@ -36,21 +33,18 @@ use http::method;
 impl App for HelloWorld {
     #[allow(unused_must_use)]
     #[allow(unused_variable)]
-    fn handle_route<'a>(&self, route: Option<&&'static str>, vars: Option<HashMap<~str,~str>>,
-                         req: &mut Request, res: &mut ResponseWriter) {
+    fn handle_route<'a>(&self, route: Option<&&'static str>, vars: Option<HashMap<String,String>>,
+                         req: &mut Request) -> Response {
         if route.is_none() {
             // 404
-            self.default_404(req, res);
+            return self.default_404(req);
         } else {
             match *route.unwrap() {
                 "index" => {
-                    self.index(res);
+                    self.index()
                 }
                 "mustache" => {
-                    res.write_content_auto(
-                        content_type!("text", "html").unwrap(), 
-                        StrBuf::from_str("Hello mustache! TODO fix me to actually call the mustache method whenever rust-mustache updates to the latest rust")
-                    ); 
+                    Response::empty()
                 }
                 _ => {
                     unreachable!();
@@ -74,30 +68,29 @@ struct HelloWorld {
 
 impl HelloWorld {
     #[allow(unused_must_use)]
-    fn index(&self, response: &mut ResponseWriter) {
-        response.status = status::Ok;
-        response.write_content_auto(
-            content_type!("text", "html").unwrap(), 
-            self.render("index.html")
-        );
+    fn index(&self) -> Response {
+        Response::ok(self.render("index.html"), None)
     }
-    fn render(&self, template: &str) -> StrBuf {
+
+    fn render(&self, template: &str) -> String {
         // TODO: Don't let the render function fail! instead properly handle errors and return a Result
+        // Or maybe return a 500 error message? I'm not sure what the proper thing should be
         let path = self.template_path.join(Path::new(template));
-        debug!("Template Path: {}",  path.display());
         let file_contents = File::open(&path).read_to_end().unwrap();
-        StrBuf::from_utf8(file_contents).unwrap()
+        String::from_utf8(file_contents).unwrap()
     }
 }
 
 fn main() {
     let app = box HelloWorld {
+        // a hard coded path to the template directory. Change that to be your template location
         template_path: Arc::new(Path::new("/home/jrowe7/slf/oxidize/examples/hello_world/templates")),
     };
+    // the Config currently does nothing. Its kinda there to reserve a space for something useful later.
     let conf = Config {
         debug: true,
-        bind_addr: from_str::<SocketAddr>("127.0.0.1:8001").unwrap(),
     };
-    let server = Oxidize::new(conf, app as Box<App:Send+Share>, None);
+    let oxidize = Oxidize::new(conf, app as Box<App:Send+Share>, None);
+    let server = RustHttpBackend::new("127.0.0.1:8001", oxidize);
     server.serve();
 }
