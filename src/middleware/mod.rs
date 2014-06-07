@@ -9,13 +9,16 @@ use response::Response;
 
 // Not documented since this will LIKELY radically change in the near future
 #[allow(missing_doc)]
-pub trait MiddleWare:Send+Share {
-    fn apply(&self, &mut Request, &mut Response);
-    fn copy(&self) -> Box<MiddleWare:Send+Share>;
+pub trait MiddleWare {
+    fn before(&self, &mut Request);
+    fn after(&self, &mut Response);
+    // fn copy(&self) -> Box<MiddleWare:Send+Share>;
 }
 
-impl Clone for Box<MiddleWare:Send+Share> {
-    fn clone(&self) -> Box<MiddleWare:Send+Share> {
-        self.copy()
-    }
-}
+// impl Clone for Box<MiddleWare:Send+Share> {
+//     fn clone(&self) -> Box<MiddleWare:Send+Share> {
+//         self.copy()
+//     }
+// }
+
+pub mod session;
