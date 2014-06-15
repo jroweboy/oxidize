@@ -10,7 +10,7 @@ use self::http::server::request::{AbsolutePath, AbsoluteUri, Authority, Star};
 use self::http::server::{Request, Server, ResponseWriter, Config};
 
 use std::io::net::ip::SocketAddr;
-use collections::hashmap::HashMap;
+use std::collections::HashMap;
 use std::mem::transmute;
 // use url::Url;
 use url::path_from_str;
@@ -59,7 +59,8 @@ impl RustHttpBackend {
             uri: path.to_str().to_string(),
             GET: option_get,
             POST: None,
-            user: None
+            user: None,
+            cookies: HashMap::new()
         }
     }
 

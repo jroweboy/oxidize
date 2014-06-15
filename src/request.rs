@@ -4,7 +4,7 @@
 //! but there probably isn't a good reason to change the request in your controller method
 
 use common::method::Method;
-use collections::hashmap::HashMap;
+use std::collections::HashMap;
 
 #[allow(uppercase_variables)]
 /// One of the goals of the Request struct is to contain any and all relevent information 
@@ -22,6 +22,8 @@ pub struct Request {
     /// Not in use currently, but I plan on changing this to allow an authentication 
     /// middleware to attach a struct to represent a User
     pub user : Option<String>,
+    /// TODO: Should the cookies be an option as well?
+    pub cookies: HashMap<String, Vec<String>>
 }
 
 // fn parse_vars(vars: &str) -> HashMap<~str, ~str> {

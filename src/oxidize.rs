@@ -66,7 +66,7 @@ impl Oxidize {
 
 #[cfg(test)]
 mod test {
-    use collections::hashmap::HashMap;
+    use std::collections::HashMap;
     use http::server::Server;
     #[allow(unused_imports)]
     use http::method::{Get, Post, Delete, Put, Head};
@@ -76,7 +76,7 @@ mod test {
     struct TestApp;
     impl ::app::App for TestApp {
         #[allow(unused_variable)]
-        fn handle_route<'a>(&self, route: Option<&&'static str>, vars: Option<HashMap<~str,~str>>,
+        fn handle_route<'a>(&self, route: Option<&&'static str>, vars: Option<HashMap<String,String>>,
                          req: &mut ::request::Request, res: &mut ::http::server::ResponseWriter) {
             // Do nothing. Lets just say it doesn't fail for testing purposes right now.
             // Eventually I'll want to make a separate App that fails on handle route 

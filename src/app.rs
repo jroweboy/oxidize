@@ -9,7 +9,7 @@ use request::Request;
 use response::Response;
 // use http::server::ResponseWriter;
 // use http::status;
-use collections::hashmap::HashMap;
+use std::collections::HashMap;
 use router::Router;
 
 /// In order for your application to receive the request and response data from Oxidize

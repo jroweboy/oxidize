@@ -15,7 +15,7 @@ use oxidize::{App, Config, Oxidize, Request, Response};
 use oxidize::backend::rusthttp::RustHttpBackend;
 use oxidize::backend::OxidizeBackend;
 
-use collections::hashmap::HashMap;
+use std::collections::HashMap;
 use std::path::posix::Path;
 use std::io::File;
 use sync::Arc;
