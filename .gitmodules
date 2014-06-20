@@ -3,7 +3,7 @@
 	url = https://github.com/chris-morgan/rust-http.git
 [submodule "rust-zmq"]
 	path = rust-zmq
-	url = https://github.com/jroweboy/rust-zmq
+	url = https://github.com/jroweboy/rust-zmq.git
 [submodule "rust-openssl"]
 	path = rust-openssl
-	url = https://github.com/sfackler/rust-openssl
+	url = https://github.com/sfackler/rust-openssl.git

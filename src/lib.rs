@@ -10,11 +10,11 @@
 #![doc(html_root_url = "http://www.rust-ci.org/jroweboy/oxidize/doc/")]
 
 // TODO make sure that this is uncommented before committing
-#![deny(missing_doc)]
+// #![deny(missing_doc)]
 
 #![feature(macro_rules)]
 #![feature(phase)]
-#[phase(syntax, link)] extern crate log;
+#[phase(plugin, link)] extern crate log;
 // extern crate http;
 extern crate time;
 extern crate collections;
@@ -22,6 +22,9 @@ extern crate sync;
 extern crate syntax;
 extern crate test;
 extern crate url;
+extern crate openssl;
+extern crate zmq;
+extern crate serialize;
 
 pub use app::App;
 pub use conf::Config;

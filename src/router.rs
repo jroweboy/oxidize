@@ -55,7 +55,7 @@
 //!There is also a macro for creating a route vector, like the one in the first example.
 //!These can be found in the crate `rustful_macros`.
 
-use collections::hashmap::HashMap;
+use std::collections::HashMap;
 use common::method::Method;
 use std::vec::Vec;
 
@@ -330,7 +330,7 @@ fn path_to_vec(path: &str) -> Vec<String> {
 #[cfg(test)]
 mod test {
     use test::Bencher;
-    use collections::hashmap::HashMap;
+    use std::collections::HashMap;
     use super::Router;
     use http::method::{Get, Post, Delete, Put, Head};
     use std::vec::Vec;
