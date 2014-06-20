@@ -1,9 +1,9 @@
 [submodule "rust-http"]
 	path = rust-http
-	url = https://github.com/jroweboy/rust-http.git
+	url = https://github.com/chris-morgan/rust-http.git
 [submodule "rust-zmq"]
 	path = rust-zmq
-	url = http://github.com/jedisct1/rust-zmq
+	url = https://github.com/jroweboy/rust-zmq
 [submodule "rust-openssl"]
 	path = rust-openssl
 	url = https://github.com/sfackler/rust-openssl
