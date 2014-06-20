@@ -90,7 +90,7 @@ fn main() {
     let conf = Config {
         debug: true,
     };
-    let oxidize = Oxidize::new(conf, app as Box<App:Send+Share>, None);
+    let oxidize = Oxidize::new(conf, app as Box<App+Send+Share>, None);
     let server = RustHttpBackend::new("127.0.0.1:8001", oxidize);
     server.serve();
 }

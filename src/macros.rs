@@ -4,7 +4,7 @@
 #![license = "MIT"]
 #![crate_type = "dylib"]
 
-#![feature(macro_rules, macro_registrar, managed_boxes, quote, phase)]
+#![feature(macro_rules, plugin_registrar, managed_boxes, quote, phase)]
 #![feature(trace_macros)]
 /**
 router! is a macro that is intended to ease the implementation of App for your App Struct
@@ -95,7 +95,7 @@ use syntax::print::pprust;
 use syntax::ast;
 
 
-#[macro_registrar]
+#[plugin_registrar]
 #[doc(hidden)]
 pub fn macro_registrar(register: |ast::Name, SyntaxExtension|) {
     let expander = box BasicMacroExpander{expander: expand_router, span: None};
@@ -108,7 +108,6 @@ pub fn macro_registrar(register: |ast::Name, SyntaxExtension|) {
 // (04:54:05 PM) huon: jroweboy: however you can probably use a quote macro
 // (04:54:19 PM) huon: jroweboy: quote_item!(cx, impl $trait for $type { $methods })
 // (04:54:36 PM) jroweboy: how is that different than macro_rules! ?
-// (04:54:37 PM) pczarn left the room (quit: Input/output error).
 // (04:54:50 PM) huon: this has to be inside your procedural macro
 // (04:54:56 PM) jroweboy: oh, I see it goes inside the macro
 // (04:55:04 PM) huon: i.e. you still need #[macro_registrar] etc.

@@ -21,17 +21,17 @@ static version : &'static str = "Oxidize/0.2.0 (Ubuntu)";
 /// Oxidize is a struct that will handle requests 
 #[deriving(Clone)]
 pub struct Oxidize {
-    app : Arc<Box<App:Send+Share>>,
+    app : Arc<Box<App+Send+Share>>,
     conf: Arc<Config>,
     router : Arc<Router<&'static str>>,
     // obviously my favorite type in the whole program. maybe worth a typedef...
-    filters : Option<Arc<RWLock<Vec<Box<MiddleWare:Send+Share>>>>>,
+    filters : Option<Arc<RWLock<Vec<Box<MiddleWare+Send+Share>>>>>,
     server_version : Arc<Option<String>>,
 }
 
 impl Oxidize {
     /// Creates a new Oxidize which contains the main guts of the web application
-    pub fn new(conf: Config, app: Box<App:Send+Share>, filters: Option<Vec<Box<MiddleWare:Send+Share>>>) -> Oxidize {
+    pub fn new(conf: Config, app: Box<App+Send+Share>, filters: Option<Vec<Box<MiddleWare+Send+Share>>>) -> Oxidize {
         Oxidize {
             router: Arc::new(app.get_router()),
             app: Arc::new(app),
@@ -98,7 +98,7 @@ mod test {
             debug: true,
             // bind_addr: from_str::<SocketAddr>("127.0.0.1:8001").unwrap(),
         };
-        Oxidize::new(conf, app as Box<::app::App:Send+Share>, None)
+        Oxidize::new(conf, app as Box<::app::App+Send+Share>, None)
     }
 
     #[test]

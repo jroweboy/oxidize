@@ -64,7 +64,7 @@ pub fn to_writer(writer: &mut Writer, tnetstring: &TNetString) -> io::IoResult<(
             let payload = wr.unwrap();
             try!(write!(writer, "{}:", payload.len()));
             try!(writer.write(payload.as_slice()));
-            try!(write!(writer, "\\}"));
+            try!(write!(writer, "}}"));
             Ok(())
         }
         Vec(ref v) => {
