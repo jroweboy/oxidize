@@ -10,7 +10,7 @@ Make a small, extensible micro framework to allow users the freedom to choose wh
 Rust Verison
 ============
 
-I try to keep it up to date with master, but if it ever falls behind, it should be too hard to update. The codebase is pretty small
+I try to keep it up to date with master, but if it ever falls behind, it shouldn't be too hard to update. The codebase is pretty small
 
 Building Oxidize
 ================
